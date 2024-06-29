@@ -1,0 +1,55 @@
+# Build and Release Folders
+bin-debug/
+bin-release/
+[Oo]bj/
+[Bb]in/
+
+# Other files and folders
+.settings/
+
+# Executables
+*.swf
+*.air
+*.ipa
+*.apk
+.idea/
+.vscode/
+.cache/
+.vnext/
+.vnext/*
+/.vnext/*
+/.vnext/
+*.iml
+# Project files, i.e. `.project`, `.actionScriptProperties` and `.flexProperties`
+# should NOT be excluded as they contain compiler settings and other important
+# information for Eclipse / Flash Builder.
+/*.bc
+*.bc
+/module-resolve.json
+./build/
+/build/
+/test/build/
+/test/module-resolve.json
+*.o
+*.a
+*.so
+*.dll
+*.cjo
+*.bchir
+*.bchir2
+/unittest/
+./unittest/
+.cjpm-history
+module-lock.json
+*.cj.macrocall
+.cache/*
+/.cache/*
+.vnext/project.json
+.vnext/settings.json
+target/
+./target
+./target/
+./target/*
+./cjpm.lock
+cjpm.lock
+main
