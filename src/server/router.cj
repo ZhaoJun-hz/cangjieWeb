@@ -1,19 +1,21 @@
 package server
 from net import http.HttpRequestHandler
-from std import collection.HashMap
+from std import collection.HashMap, collection.ArrayList
 
 public class Router{
-    private let routers: HashMap<String, HttpRequestHandler>
+    private let routerGroups: ArrayList<RouterGroup>
 
     public Router() {
-        this.routers = HashMap<String, HttpRequestHandler>()
+        this.routerGroups = ArrayList<RouterGroup>()
     }
 
-    public func addRouter(path: String, handler: HttpRequestHandler) {
-        this.routers.put(path, handler)
+    public func addRouterGroup(path: String) {
+        let routerGroup = RouterGroup(path)
+        this.routerGroups.append(routerGroup)
+        return routerGroup
     }
 
-    func getRouters() {
-        return this.routers
+    func getRouterGroups() {
+        return this.routerGroups
     }
 }
