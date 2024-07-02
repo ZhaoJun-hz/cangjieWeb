@@ -2,31 +2,32 @@ from net import http.ServerBuilder, http.FuncHandler
 import server.Router, server.Engine
 main() {
     let engine = Engine(8888)
-    let user = engine.addRouterGroup("user")
-    user.Get("info", FuncHandler({httpContext => 
-        println("user info come here")
-        httpContext.responseBuilder.body("hello this is user info")
+    let user = engine.addRouterGroup("/user")
+    user.Get("/list", FuncHandler({httpContext => 
+        println("user list")
+        httpContext.responseBuilder.body("user list")
     }))
-    user.Post("info", FuncHandler({httpContext => 
-        println("post user info come here")
-        httpContext.responseBuilder.body("hello this is user info post method")
+    user.Put("/add", FuncHandler({httpContext => 
+        println("user add")
+        httpContext.responseBuilder.body("user add")
     }))
-
-    user.Get("list", FuncHandler({httpContext => 
-        println("user list come here")
-        httpContext.responseBuilder.body("hello this is user list")
+   
+    let product = engine.addRouterGroup("/product")
+    product.Get("/:id/:name", FuncHandler({httpContext => 
+        println("product :id :name")
+        httpContext.responseBuilder.body("product :id :name")
     }))
-
-    let product = engine.addRouterGroup("product")
-    product.Post("info", FuncHandler({httpContext => 
-        println("product info come here")
-        httpContext.responseBuilder.body("hello this is product info")
+  
+    let dept = engine.addRouterGroup("/dept")
+    dept.Get("/*", FuncHandler({httpContext => 
+        println("dept *")
+        httpContext.responseBuilder.body("dept *")
     }))
-
-    product.Put("list", FuncHandler({httpContext => 
-        println("product list come here")
-        httpContext.responseBuilder.body("hello this is product list")
+    
+    let menu = engine.addRouterGroup("/menu")
+    menu.Get("/*/info", FuncHandler({httpContext => 
+        println("menu * info")
+        httpContext.responseBuilder.body("menu * info")
     }))
-
     engine.run()
 }

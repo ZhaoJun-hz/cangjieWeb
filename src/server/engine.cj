@@ -26,22 +26,32 @@ public class Engine {
     func handler(ctx: HttpContext) {
         let requestMethod = ctx.request.method
         let requestPath = ctx.request.url.path
-        println("收到请求，请求路径: ${requestPath} 请求方法: ${requestMethod}")
+        println("receive request requestPath : ${requestPath} request method: ${requestMethod}")
 
         for(routerGroup in this.router.getRouterGroups()) {
             if(!requestPath.startsWith(routerGroup.getName())) {
                 continue
             }
+            // /info/:id/:name /info/1/1000
             let routerPath = requestPath[routerGroup.getName().size..]
-            if (!routerGroup.getRouters().contains(routerPath)) {
-                continue
+            let result = routerGroup.treeNode.get(routerPath)
+            match (result) {
+                case Some(treeNode) => 
+                    // 匹配一下请求方式
+                    println("${routerPath}  ${treeNode.fullPath}")
+                    if (routerGroup.getRouters()[treeNode.fullPath].contains(requestMethod)) {
+                        // 请求方式匹配
+                        return routerGroup.getRouters()[treeNode.fullPath][requestMethod].handle(ctx)
+                    } else {
+                        // 请求方式不匹配
+                            return FuncHandler({httpContext => 
+                                httpContext.responseBuilder.status(HttpStatusCode.STATUS_METHOD_NOT_ALLOWED)
+                            }).handle(ctx)
+                    }
+
+                case None => println("not found router ${routerPath}")
+                
             }
-            if(!routerGroup.getRouters()[routerPath].contains(requestMethod)) {
-                return FuncHandler({httpContext => 
-                    httpContext.responseBuilder.status(HttpStatusCode.STATUS_METHOD_NOT_ALLOWED)
-                }).handle(ctx)
-            }
-            return routerGroup.getRouters()[routerPath][requestMethod].handle(ctx)
         }
         return FuncHandler({ctx => 
             ctx.responseBuilder.status(HttpStatusCode.STATUS_NOT_FOUND)
