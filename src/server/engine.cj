@@ -41,7 +41,8 @@ public class Engine {
                     println("${routerPath}  ${treeNode.fullPath}")
                     if (routerGroup.getRouters()[treeNode.fullPath].contains(requestMethod)) {
                         // 请求方式匹配
-                        return routerGroup.getRouters()[treeNode.fullPath][requestMethod].handle(ctx)
+                        let handler = routerGroup.getRouters()[treeNode.fullPath][requestMethod]
+                        return routerGroup.invokeHandler(treeNode.fullPath, requestMethod, handler, ctx)
                     } else {
                         // 请求方式不匹配
                             return FuncHandler({httpContext => 
