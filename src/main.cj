@@ -55,6 +55,22 @@ func userGet(context: BaseHttpContext): Unit{
     context.Json(HttpStatusCode.STATUS_OK, user)
 }
 
+func userInfo(context: BaseHttpContext): Unit{
+    println("user info")
+    let id = context.GetQuery("id")
+    let name = context.GetQueryDefault("name", "闲不下来的程序猿")
+    let phone = context.GetQueryDefault("phone", "18234567890")
+    let email = context.GetQueryAll("email")
+    println("id = ${id}, name=${name}, phone=${phone}, email = ${email}")
+    let user = User()
+    user.name = name
+    user.age = 18
+    user.phone = phone
+    user.email = "zhao@163.com"
+    context.Json(HttpStatusCode.STATUS_OK, user)
+}
+
+
 main() {
     let engine = Engine(8888)
     let user = engine.addRouterGroup("/user")
@@ -62,5 +78,6 @@ main() {
     user.Get("/list", userList, RouterMiddlewareFun1, RouterMiddlewareFun2)
     user.Put("/add", userAdd)
     user.Get("/get", userGet)
+    user.Get("/info", userInfo)
     engine.run()
 }
