@@ -1,6 +1,5 @@
-package model
-from serialization import serialization.*
-from encoding import json.*
+package cangjieWeb.model
+import serialization.serialization.{Serializable, DataModel, DataModelStruct, field}
 
 public class User <: Serializable<User> {
 

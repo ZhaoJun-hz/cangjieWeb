@@ -1,5 +1,5 @@
-package server
-from net import http.HttpRequestDistributor, http.FuncHandler
+package cangjieWeb.server
+import net.http.{HttpRequestDistributor, FuncHandler, HttpRequestHandler}
 class BaseDistrubutor <: HttpRequestDistributor {
     private var handler: HttpRequestHandler
 

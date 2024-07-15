@@ -1,5 +1,5 @@
-package server
-from net import http.Server, http.ServerBuilder, http.HttpContext, http.HttpStatusCode
+package cangjieWeb.server
+import net.http.{Server, ServerBuilder, HttpContext, HttpStatusCode, FuncHandler}
 public type HandlerFunc = (BaseHttpContext) -> Unit
 public class Engine {
     let port: Int64

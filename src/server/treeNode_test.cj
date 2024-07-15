@@ -1,5 +1,5 @@
-package server
-from std import unittest.*
+package cangjieWeb.server
+import std.unittest.*
 
 @Test
 func testTreeNode() {

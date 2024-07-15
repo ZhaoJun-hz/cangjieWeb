@@ -1,6 +1,6 @@
-package server
-from net import http.HttpRequestHandler
-from std import collection.HashMap, collection.ArrayList
+package cangjieWeb.server
+import net.http.{HttpRequestHandler}
+import std.collection.{HashMap, ArrayList}
 
 public class Router{
     private let routerGroups: ArrayList<RouterGroup>

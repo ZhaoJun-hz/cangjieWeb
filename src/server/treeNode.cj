@@ -1,4 +1,5 @@
-package server
+package cangjieWeb.server
+import std.collection.{ArrayList}
 class TreeNode {
     // /info/hello/abc
     let path: String                    // info             hello            abc 

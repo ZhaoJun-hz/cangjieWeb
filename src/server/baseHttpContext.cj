@@ -1,11 +1,13 @@
-package server
-from serialization import serialization.*
-from encoding import json.*, url.*
+package cangjieWeb.server
+import serialization.serialization.{Serializable}
+import encoding.json.ToJson
+import encoding.url.{Form}
+import net.http.{HttpContext}
 public class BaseHttpContext {
-    private let context: http.HttpContext 
-    private let queryForm: url.Form
+    private let context: HttpContext 
+    private let queryForm: Form
 
-    BaseHttpContext(context: http.HttpContext ) {
+    BaseHttpContext(context: HttpContext ) {
         this.context = context
         this.queryForm = context.request.url.queryForm
     }

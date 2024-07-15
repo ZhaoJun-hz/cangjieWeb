@@ -1,6 +1,7 @@
-from net import http.ServerBuilder, http.FuncHandler, http.HttpRequestHandler, http.HttpStatusCode
-import server.Router, server.Engine, server.HandlerFunc, server.BaseHttpContext
-import model.User
+package cangjieWeb
+import net.http.{ServerBuilder, FuncHandler, HttpRequestHandler, HttpStatusCode}
+import cangjieWeb.server.{Router, Engine, HandlerFunc, BaseHttpContext}
+import cangjieWeb.model.User
 
 func GroupMiddlewareFun1(next: HandlerFunc): HandlerFunc {
     return { ctx=>
@@ -81,3 +82,6 @@ main() {
     user.Get("/info", userInfo)
     engine.run()
 }
+
+
+
