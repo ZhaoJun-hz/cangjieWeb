@@ -6,10 +6,24 @@ import net.http.{HttpContext}
 public class BaseHttpContext {
     private let context: HttpContext 
     private let queryForm: Form
+    private let formContent: Form
 
     BaseHttpContext(context: HttpContext ) {
         this.context = context
         this.queryForm = context.request.url.queryForm
+        this.formContent = context.request.form
+    }
+
+    public func GetForm(key: String) {
+        return this.formContent.get(key).getOrDefault({ => ""})
+    }
+
+    public func GetFormDefault(key: String, defaultValue: String) {
+        return this.formContent.get(key).getOrDefault({ => defaultValue})
+    }
+
+    public func GetFormAll(key: String) {
+        return this.formContent.getAll(key)
     }
 
     public func GetQuery(key: String) {

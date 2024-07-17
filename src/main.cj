@@ -41,11 +41,6 @@ func userList(context: BaseHttpContext): Unit{
     context.HTML(HttpStatusCode.STATUS_OK,"<h1>user list</h1>")
 }
 
-func userAdd(context: BaseHttpContext): Unit{
-    println("user add")
-    context.String(HttpStatusCode.STATUS_OK, "user add")
-}
-
 func userGet(context: BaseHttpContext): Unit{
     println("user get")
     let user = User()
@@ -69,6 +64,17 @@ func userInfo(context: BaseHttpContext): Unit{
     user.phone = phone
     user.email = "zhao@163.com"
     context.Json(HttpStatusCode.STATUS_OK, user)
+}
+
+func userAdd(context: BaseHttpContext): Unit{
+    println("user add")
+    let phone = context.GetForm("phone")
+    let password = context.GetFormDefault("password","123456")
+    let email = context.GetFormAll("email")
+    let name = context.GetForm("name")
+    let `from` = context.GetQuery("from")
+    println("from = ${`from`}, name=${name}, password = ${password} phone=${phone}, email = ${email}")
+    context.String(HttpStatusCode.STATUS_OK, "user add")
 }
 
 
