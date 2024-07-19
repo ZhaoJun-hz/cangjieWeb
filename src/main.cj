@@ -77,6 +77,16 @@ func userAdd(context: BaseHttpContext): Unit{
     context.String(HttpStatusCode.STATUS_OK, "user add")
 }
 
+func formData(context: BaseHttpContext): Unit {
+    let name = context.GetForm("name")
+    let id = context.GetFormDefault("id", "123456")
+    let number = context.GetFormDefault("number", "123444444")
+    let arrays = context.GetFormAll("arrays")
+    let `from` = context.GetQuery("from")
+    println("from = ${`from`}, name=${name}, id = ${id} number=${number}, arrays = ${arrays}")
+    context.String(HttpStatusCode.STATUS_OK, "formData")
+}
+
 
 main() {
     let engine = Engine(8888)
@@ -86,6 +96,9 @@ main() {
     user.Put("/add", userAdd)
     user.Get("/get", userGet)
     user.Get("/info", userInfo)
+
+    let test = engine.addRouterGroup("test")
+    test.Post("formData", formData)
     engine.run()
 }
 
