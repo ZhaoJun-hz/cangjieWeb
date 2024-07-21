@@ -44,7 +44,7 @@ public class ByteArrayUtils {
         if(!dropLast) {
             // 上一个匹配的索引小标 + 分隔符长度 不等于 原Byte数组的长度，说明有内容
             if (prevIndex + separatorSize != sourceSize) {
-                result.append(source[prevIndex + separatorSize..])
+                result.append(source[prevIndex..])
             }
         }
         return result
