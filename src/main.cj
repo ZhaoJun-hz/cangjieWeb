@@ -83,7 +83,7 @@ func formData(context: BaseHttpContext): Unit {
     let number = context.GetFormDefault("number", "123444444")
     let arrays = context.GetFormAll("arrays")
     let `from` = context.GetQuery("from")
-    println("from = ${`from`}, name=${name}, id = ${id} number=${number}, arrays = ${arrays}")
+    println("from = ${`from`}, name = ${name}, id = ${id} number = ${number}, arrays = ${arrays}")
     context.String(HttpStatusCode.STATUS_OK, "formData")
 }
 

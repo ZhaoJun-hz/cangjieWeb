@@ -8,29 +8,29 @@ public class BaseHttpContext {
     private var formInitFlag: Bool
     private var queryInitFlag: Bool
     private var queryCache: Form
-    private var formCache: Form
+    private var formCache: MultiForm
 
     BaseHttpContext(context: HttpContext ) {
         this.context = context
         this.queryCache = Form()
-        this.formCache = Form()
+        this.formCache = MultiForm()
         this.formInitFlag = false
         this.queryInitFlag = false
     }
 
     public func GetForm(key: String) {
         formInit()
-        return this.formCache.get(key).getOrDefault({ => ""})
+        return this.formCache.getForm().get(key).getOrDefault({ => ""})
     }
 
     public func GetFormDefault(key: String, defaultValue: String) {
         formInit()
-        return this.formCache.get(key).getOrDefault({ => defaultValue})
+        return this.formCache.getForm().get(key).getOrDefault({ => defaultValue})
     }
 
     public func GetFormAll(key: String) {
         formInit()
-        return this.formCache.getAll(key)
+        return this.formCache.getForm().getAll(key)
     }
 
     public func GetQuery(key: String) {
@@ -75,7 +75,7 @@ public class BaseHttpContext {
         }
         let contentType = this.context.request.headers.getFirst("Content-Type") ?? ""
         if (contentType.startsWith("application/x-www-form-urlencoded")) {
-            this.formCache = this.context.request.form
+            this.formCache.setForm(this.context.request.form)
         }else if (contentType.startsWith("multipart/form-data")) {
             let contentLength = this.context.request.headers.getFirst("Content-Length") ?? "0"
             let formDataParse = FormDataParse(contentType, contentLength, this.context.request.body)

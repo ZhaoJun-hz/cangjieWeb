@@ -17,22 +17,14 @@ class FormDataParse {
         this.bodyStream = bodyStream
     }
 
-    func parse(): Form {
-        let result = Form()
+    func parse(): MultiForm {
+        let result = MultiForm()
         let bodyParts = generateBodyParts()
         for(bodyPart in bodyParts) {
             if(bodyPart.judgeFile()) {
-                // 文件
-                let filePath: Path = Path("${currentDir().info.path.toString()}\\upload\\${bodyPart.getFilename()}")
-                // let filePath: Path = Path("${currentDir().info.path.toString()}\\upload\\${bodyPart.getFilename()}")
-                if(File.exists(filePath)) {
-                    File.delete(filePath)
-                }
-                var file = File(filePath, OpenOption.Create(false))
-                file.write(bodyPart.getBodyPart())
-                file.close()
+                result.addFile(bodyPart.getFilename(), bodyPart.getBodyPart())
             } else {
-                result.add(bodyPart.getName(), bodyPart.getBodyContent())
+                result.getForm().add(bodyPart.getName(), bodyPart.getBodyContent())
             }
             
         }
