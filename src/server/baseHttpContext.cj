@@ -2,7 +2,9 @@ package cangjieWeb.server
 import serialization.serialization.{Serializable}
 import encoding.json.ToJson
 import encoding.url.{Form}
-import net.http.{HttpContext}
+import net.http.{HttpContext, HttpStatusCode}
+import std.fs.{Path, File, OpenOption}
+import cangjieWeb.utils.FileUtils
 public class BaseHttpContext {
     private let context: HttpContext 
     private var formInitFlag: Bool
@@ -33,6 +35,27 @@ public class BaseHttpContext {
         return this.formCache.getForm().getAll(key)
     }
 
+    public func formFileExist(name: String) {
+        formInit()
+        return this.formCache.existFile(name)
+    }
+
+    public func getFormFile(name: String) {
+        formInit()
+        return this.formCache.getFile(name).getOrDefault({=> FileFormInfo("", Array<Byte>())})
+    }
+
+    public func saveUploadFile(name: String, path: String) {
+        let filePath = Path(path)
+        if(File.exists(filePath)) {
+            File.delete(filePath)
+        }
+        var saveFile = File(filePath, OpenOption.Create(false))
+        let fileFormInfo = this.formCache.getFile(name).getOrDefault({=> FileFormInfo("", Array<Byte>())})
+        saveFile.write(fileFormInfo.getContent())
+        saveFile.close()
+    }
+
     public func GetQuery(key: String) {
         queryInit()
         return this.queryCache.get(key).getOrDefault({ => ""})
@@ -60,6 +83,23 @@ public class BaseHttpContext {
          this.context.responseBuilder.header("content-type", "text/json; charset=utf-8").status(status)
          .body(data.serialize().toJson().asObject().toJsonString())
     }
+
+    public func FileDownload(status: UInt16, filePath: String) {
+        let fileUtlis = FileUtils()
+        if (!fileUtlis.fileExist(filePath)) {
+            String(HttpStatusCode.STATUS_NOT_FOUND, "文件不存在")
+        }
+
+        var fileInfo: File = File(filePath, OpenOption.Open(true, false))
+        this.context.responseBuilder
+            // Content-Disposition: attachment; filename=file5983940017135638617.tmp.txt
+            .header("Content-Disposition", "attachment; filename=${fileInfo.info.path.fileName.getOrDefault({ => ""})}")
+            // Content-Type: application/octet-stream;
+            .header("Content-Type", "application/octet-stream;")
+            // Content-Length: 16
+            .header("Content-Length", "${fileInfo.length}")
+            .body(fileInfo.readToEnd())
+}
 
     private func queryInit() {
         if(queryInitFlag) {

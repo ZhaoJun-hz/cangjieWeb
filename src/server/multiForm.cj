@@ -3,11 +3,11 @@ import encoding.url.Form
 import std.collection.HashMap
 class MultiForm {
     private var formCache: Form
-    private let files: HashMap<String, Array<Byte>>
+    private let files: HashMap<String, FileFormInfo>
 
     MultiForm() {
         this.formCache = Form()
-        this.files = HashMap<String, Array<Byte>>()
+        this.files = HashMap<String, FileFormInfo>()
     }
 
     public func setForm(form: Form) {
@@ -18,11 +18,15 @@ class MultiForm {
         return this.formCache
     }
 
-    public func addFile(filename: String, content: Array<Byte>) {
-        this.files.put(filename, content)
+    public func addFile(file:String, filename: String, content: Array<Byte>) {
+        this.files.put(file, FileFormInfo(filename, content))
     }
 
-    public func getFile(filename: String) {
-        return this.files.get(filename)
+    public func getFile(file: String) {
+        return this.files.get(file)
+    }
+
+    public func existFile(file: String) {
+        return this.files.contains(file)
     }
 }

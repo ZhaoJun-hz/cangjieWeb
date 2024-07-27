@@ -2,6 +2,8 @@ package cangjieWeb
 import net.http.{ServerBuilder, FuncHandler, HttpRequestHandler, HttpStatusCode}
 import cangjieWeb.server.{Router, Engine, HandlerFunc, BaseHttpContext}
 import cangjieWeb.model.User
+import cangjieWeb.utils.FileUtils
+import std.os.currentDir
 
 func GroupMiddlewareFun1(next: HandlerFunc): HandlerFunc {
     return { ctx=>
@@ -84,9 +86,25 @@ func formData(context: BaseHttpContext): Unit {
     let arrays = context.GetFormAll("arrays")
     let `from` = context.GetQuery("from")
     println("from = ${`from`}, name = ${name}, id = ${id} number = ${number}, arrays = ${arrays}")
-    context.String(HttpStatusCode.STATUS_OK, "formData")
+    let fileExist = context.formFileExist("file")
+    var filePath = "${FileUtils.fileSeparator}upload"
+    if (fileExist) {
+        let fileFormInfo = context.getFormFile("file")
+        filePath = filePath + "${FileUtils.fileSeparator}" + fileFormInfo.getFilename()
+        context.saveUploadFile("file", "${currentDir().info.path.toString()}${filePath}")
+    }
+    let downFileUrl = "/test/download?filePath=${filePath}"
+    context.String(HttpStatusCode.STATUS_OK, downFileUrl)
 }
 
+func download(context: BaseHttpContext):Unit {
+    let filePath = context.GetQuery("filePath")
+    let fileUtlis = FileUtils()
+    if (!fileUtlis.fileExist("${currentDir().info.path.toString()}${filePath}")) {
+        context.String(HttpStatusCode.STATUS_NOT_FOUND, "文件不存在")
+    }
+    context.FileDownload(HttpStatusCode.STATUS_OK, "${currentDir().info.path.toString()}${filePath}")
+}
 
 main() {
     let engine = Engine(8888)
@@ -99,6 +117,7 @@ main() {
 
     let test = engine.addRouterGroup("test")
     test.Post("formData", formData)
+    test.Get("download", download)
     engine.run()
 }
 

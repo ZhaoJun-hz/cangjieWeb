@@ -22,7 +22,7 @@ class FormDataParse {
         let bodyParts = generateBodyParts()
         for(bodyPart in bodyParts) {
             if(bodyPart.judgeFile()) {
-                result.addFile(bodyPart.getFilename(), bodyPart.getBodyPart())
+                result.addFile(bodyPart.getName(),bodyPart.getFilename(), bodyPart.getBodyPart())
             } else {
                 result.getForm().add(bodyPart.getName(), bodyPart.getBodyContent())
             }
@@ -96,6 +96,9 @@ class BodyPart {
                 if (tmpHeader.startsWith("filename")) {
                     // filename="xxx"
                     this.filename = tmpHeader[10..tmpHeader.size - 1]
+                }
+                if (tmpHeader.startsWith("name")) {
+                    this.name = tmpHeader[6..tmpHeader.size - 1]
                 }
             }
         }else {
