@@ -34,8 +34,13 @@ class JsonFiledConvert {
     }
     
     public func generateDeserialize(): Tokens {
+        let tmpValName = "temp" + varId.value
+        let tmpValToken = Token(TokenKind.IDENTIFIER, tmpValName)
         quote(
-            obj.$(varId) = $(varType).deserialize(dms.get($(varId.value)))
+            let $(tmpValToken) = dms.get($(varId.value))
+            if(!($(tmpValToken) is DataModelNull)) {
+                obj.$(varId) = $(varType).deserialize($(tmpValToken))
+            }
         )
     }
 }
@@ -113,6 +118,15 @@ public macro Json(input: Tokens): Tokens {
         extend $(jsonConvert.classId) <: Serializable<$(jsonConvert.classId)> {
             $(serFunc)
             $(deserFunc)
+        }
+
+        extend $(jsonConvert.classId) {
+            public func toJson(): String {
+                this.serialize().toJson().toString()
+            }
+            public static func fromJson(json: String): $(jsonConvert.classId) {
+                $(jsonConvert.classId).deserialize(DataModel.fromJson(JsonValue.fromStr(json)))
+            }
         }
     )
 }

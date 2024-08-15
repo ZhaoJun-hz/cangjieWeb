@@ -126,10 +126,9 @@ import cangjieWeb.model.Student
 import serialization.serialization.*
 import encoding.json.*
 main() {
-    var student = Student()
-    let jsonString = student.serialize().toJson().toString()
+    var jsonString = "{\"name\": \"123456\"}"
     println(jsonString)
-    var student2 = Student.deserialize(DataModel.fromJson(JsonValue.fromStr(jsonString)))
-    println("student name ${student2.name}")
-    println("student age ${student2.age}")
+    var student = Student.fromJson(jsonString)
+    println("student name ${student.name}")
+    println("student age ${student.age}")
 }
