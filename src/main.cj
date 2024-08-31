@@ -122,13 +122,33 @@
 // }
 
 package cangjieWeb
-import cangjieWeb.model.Student
+import cangjieWeb.model.School
 import serialization.serialization.*
 import encoding.json.*
+import std.reflect.*
+import cangjieWeb.annotation.Validate
+
+public func validatorClass(o: Object) {
+    let info: ClassTypeInfo = ClassTypeInfo.of(o)
+    println("info.name = " + info.name)
+    println("info.qualifiedName = " + info.qualifiedName)
+    let instanceVariables = info.instanceVariables
+    for(variable in instanceVariables) {
+        println("variable.name = " + variable.name)
+        println("variable.typeInfo.name = " + variable.typeInfo.name)
+        println("variable.typeInfo.qualifiedName = " + variable.typeInfo.qualifiedName)
+        println((variable.getValue(o) as String).getOrDefault({ => ""}))
+        let validateAnnotation:Option<Validate> = variable.findAnnotation<Validate>()
+        match(validateAnnotation) {
+            case Some(v) => println("v.getValidate() = " + v.getValidate())
+            case None => println("None")
+        }
+    }
+}
+
 main() {
-    var jsonString = "{\"name\": \"123456\"}"
-    println(jsonString)
-    var student = Student.fromJson(jsonString)
-    println("student name ${student.name}")
-    println("student age ${student.age}")
+    let school = School()
+    school.name = "myself school"
+    validatorClass(school)
+
 }
