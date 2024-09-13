@@ -2,6 +2,13 @@ package cangjieWeb.mysql
 import std.database.sql.{Connection, ConnectionState, Transaction, Statement}
 import std.collection.{Map,HashMap}
 public class MysqlConnection <: Connection {
+
+    private let config: Config
+
+    public init(config: Config)  {
+        this.config = config
+    }
+
     public prop state: ConnectionState {
         get() {
             return ConnectionState.Connected
