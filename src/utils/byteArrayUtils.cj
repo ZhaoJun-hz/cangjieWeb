@@ -50,4 +50,19 @@ public class ByteArrayUtils {
         return result
     }
 
+    // 在字节数组source 中查找目标target的第一个索引，找不到返回-1
+    public static func indexByte(source: Array<Byte>, target: Byte): Int64 {
+        for (i in 0 .. source.size) {
+            if (source[i] == target) {
+                return i
+            }
+        }
+        return -1
+    }
+
+    // 小端序 字节数组  转 uint16
+    public static func littleEndianUint16(b: Array<Byte>): UInt16 {
+        return UInt16(b[0]) | UInt16(b[1]) << 8
+    }
+
 }
