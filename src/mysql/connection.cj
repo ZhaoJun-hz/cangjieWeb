@@ -31,6 +31,8 @@ public class MysqlConnection <: Connection {
 
         // 读HandShake包
         readInitPacket()
+        // 发送HandShakeResponse
+        writeAuthPacket()
     }
 
     public prop state: ConnectionState {
@@ -94,6 +96,78 @@ public class MysqlConnection <: Connection {
         }
     }
 
+    private func writeAuthPacket() {
+        // 4 clientFlags
+        // 4 max packet size
+        // 1 charset
+        // 23 保留位
+        // username 以0结尾
+        // 1 以0结尾
+        // 1 密码长度
+        // 密码
+        // dbname
+        // 21 认证插件
+
+        var clientFlags: UInt32 = 
+            clientProtocol41 |  
+            clientSecureConn | 
+            clientLongPassword | 
+            clientTransactions | 
+            clientLocalFiles |  
+            clientPluginAuth |  
+            clientMultiResults | 
+            flags &
+            clientLongFlag 
+
+        let authResp = ByteArrayUtils.scrambleCachingSha2(cipher, config.password.toArray())
+
+        let authRespLen = authResp.size
+        let authRespLEI = ByteArrayUtils.appendLengthEncodedInteger(UInt64(authRespLen))
+        if (authRespLEI.size > 1) {
+            clientFlags |= clientPluginAuthLenEncClientData
+        }
+
+        var pktLen = 4 + 4 + 1 + 23 + config.username.toArray().size + 1 + authRespLEI.size + authResp.size + 21
+        if (config.dbname.size > 0) {
+            clientFlags |= UInt32(clientConnectWithDB)
+            pktLen += config.dbname.toArray().size + 1
+        }
+        // 包头
+        let data = Array<Byte>(pktLen + 4, item: 0)
+
+        data[4] = UInt8(clientFlags & 0xff)
+        data[5] = UInt8(clientFlags >> 8 & 0xff)
+        data[6] = UInt8(clientFlags >> 16 & 0xff)
+        data[7] = UInt8(clientFlags >> 24 & 0xff)
+        // 8 9 10 11 max packet size
+        data[12] = charset
+
+        var pos = 13 + 23
+        // username
+        if(config.username.size > 0) {
+            config.username.toArray().copyTo(data, 0, pos, config.username.toArray().size)
+            pos += config.username.toArray().size
+        }
+        pos += 1
+        
+        //  密码长度
+        authRespLEI.copyTo(data, 0, pos, authRespLEI.size)
+        pos += authRespLEI.size
+
+        // 密码
+        authResp.copyTo(data, 0, pos, authResp.size)
+        pos += authResp.size
+
+        // dbname
+        if (config.dbname.size > 0) {
+            config.dbname.toArray().copyTo(data, 0, pos, config.dbname.toArray().size)
+            pos += config.dbname.toArray().size
+        }
+        pos += 1
+        plugin.toArray().copyTo(data, 0, pos, plugin.toArray().size)
+        writePacket(data)
+    }
+
     protected func readPacket(): Array<Byte> {
         let data = buffer.readNext(4)
         let pktLen = Int64(UInt32(data[0]) | UInt32(data[1]) << 8 |  UInt32(data[2]) << 16)
@@ -106,5 +180,17 @@ public class MysqlConnection <: Connection {
         let resultData = buffer.readNext(pktLen)
 
         return resultData
+    }
+    // data 包含包头
+    protected func writePacket(data: Array<Byte>) {
+        let pktlen = data.size - 4
+
+        data[0] = UInt8(pktlen & 0xff)
+        data[1] = UInt8(pktlen >> 8)
+        data[2] = UInt8(pktlen >> 16)
+        data[3] = sequence
+
+        this.socket.write(data)
+        sequence ++
     }
 }
