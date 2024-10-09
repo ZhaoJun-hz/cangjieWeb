@@ -36,10 +36,10 @@ public class MySqlDriver <: Driver {
 
         let username = connectionString[0..usernameEnd]
         let passwoed = connectionString[usernameEnd + 1 .. passwordEnd]
-        let protocol = connectionString[passwordEnd + 1 .. passwordEnd]
+        let protocol = connectionString[passwordEnd + 1 .. protocolEnd]
         let address = connectionString[protocolEnd + 1 .. addressEnd]
         let dbname = connectionString[dbnameStart ..]
-        println("username = {username}, passwoed = ${passwoed}, protocol = ${protocol}, " + 
+        println("username = ${username}, passwoed = ${passwoed}, protocol = ${protocol}, " + 
             "address = ${address}, dbname = ${dbname}"
         )
 

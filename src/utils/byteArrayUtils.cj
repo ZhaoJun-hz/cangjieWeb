@@ -1,6 +1,8 @@
 package cangjieWeb.utils
 import std.collection.{ArrayList}
-import crypto.digest.{SHA256}
+import crypto.digest.{SHA256, SHA1}
+import crypto.keys.{RSAPublicKey, PadOption, OAEPOption}
+import std.io.ByteArrayStream
 public class ByteArrayUtils {
     // 判断两个Array<Byte>数组是否相等，相等，返回true，否则，返回false
     public static func judgeByteArrayEqual(source: Array<Byte>, dest: Array<Byte>): Bool {
@@ -88,6 +90,33 @@ public class ByteArrayUtils {
         var mysqlScrambleBuff = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, item: 0)
         xorString(dig1, mysqlScrambleBuff, scramble1, CACHING_SHA2_DIGEST_LENGTH)
         return mysqlScrambleBuff
+    }
+
+    public static func scrambleRSA(password: String, publicKey: Array<Byte>, cipher: Array<Byte>): Array<Byte> {
+        var input: Array<Byte>
+        if(password.toArray().size == 0) {
+            input = Array<Byte>(1, item: 0)
+        } else {
+            input = Array<Byte>(password.toArray().size + 1, item: 0)
+            password.toArray().copyTo(input, 0, 0, password.toArray().size)
+            input[password.toArray().size] = 0
+        }
+
+        var mysqlScrambleBuff = Array<Byte>(input.size, item: 0)
+        xorString(input, mysqlScrambleBuff, cipher, input.size)
+        var rsaPub = RSAPublicKey.decodeFromPem(String.fromUtf8(publicKey))
+       
+        var byteArraySteam1 = ByteArrayStream()
+        byteArraySteam1.write(mysqlScrambleBuff)
+        
+        var byteArraySteam2 = ByteArrayStream()
+        var opt = OAEPOption(SHA1(),SHA1())
+        rsaPub.encrypt(byteArraySteam1,byteArraySteam2,padType:OAEP(opt))
+        var buffer = Array<Byte>(1024, item: 0)
+        var len = byteArraySteam2.read(buffer)
+        var res = Array<Byte>(len, item: 0)
+        buffer.copyTo(res, 0, 0, len)
+        return res
     }
     
     public static func xorString(src: Array<Byte>, to: Array<Byte>,scramble:Array<Byte>,len:Int64) {

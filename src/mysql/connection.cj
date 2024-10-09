@@ -34,6 +34,7 @@ public class MysqlConnection <: Connection {
         // 发送HandShakeResponse
         writeAuthPacket()
 
+        handleAuthResult()
 
     }
 
@@ -112,11 +113,46 @@ public class MysqlConnection <: Connection {
         let authResp = ByteArrayUtils.scrambleCachingSha2(authData, config.password.toArray())
         // 发送AuthSwitchResponse 
         writeAuthSwitchPacket(authResp)
+
+        (authData, newPlugin) = readAuthResult()
+
+        match(plugin) {
+            case "caching_sha2_password" =>
+                match(authData.size) {
+                    case 1 =>
+                        match(authData[0]) {
+                            case 4 =>
+                                // full authentication
+                                // request public key
+                                let pkeLen = 1
+                                let data = Array<Byte>(pkeLen + 4, item: UInt8(0))
+
+                                data[4] = cachingSha2PasswordRequestPublicKey
+                                // 获取公钥 请求
+                                writePacket(data)
+                                // 拿到公钥信息
+                                let publicKeyData = readPacket()
+                                // 使用公钥对密码进行加密，并发送
+                                sendEncryptedPassword(publicKeyData[1..])
+                                // 读取结果
+                                readPacket()
+
+                            case _ =>
+                                println("error or correct but do later")
+                        }
+                    case _ =>
+                        println("error size or correct size but do later")
+                }
+            case _ => 
+                println("other plugin, do later")
+        }
     }
 
     private func readAuthResult() {
         let data = readPacket()
         match(data[0]) {
+            case 1 =>
+                return (data[1..], "")
             case 254 =>
                 let pluginEndIndex =  ByteArrayUtils.indexByte(data, 0)
                 let plugin = String.fromUtf8(data[1 .. pluginEndIndex])
@@ -208,11 +244,16 @@ public class MysqlConnection <: Connection {
         writePacket(data)
     }
 
+    private func sendEncryptedPassword(publicKey: Array<Byte>) {
+        let encrypted = ByteArrayUtils.scrambleRSA(config.password, publicKey, cipher)
+        writeAuthSwitchPacket(encrypted)
+    }
+
     protected func readPacket(): Array<Byte> {
         let data = buffer.readNext(4)
         let pktLen = Int64(UInt32(data[0]) | UInt32(data[1]) << 8 |  UInt32(data[2]) << 16)
 
-        if (data[4] != sequence) {
+        if (data[3] != sequence) {
             println("ERROR sequence NOT EQUAL")
         }
         sequence ++

@@ -14,3 +14,5 @@ public let clientMultiResults:UInt32 = 131072
 public let clientPluginAuth:UInt32 = 524288
 public let clientConnectAttrs:UInt32 = 1048576
 public let clientPluginAuthLenEncClientData:UInt32 = 2097152
+
+public let cachingSha2PasswordRequestPublicKey: Byte = UInt8(2)
