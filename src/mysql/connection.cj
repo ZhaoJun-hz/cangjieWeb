@@ -33,6 +33,8 @@ public class MysqlConnection <: Connection {
         readInitPacket()
         // 发送HandShakeResponse
         writeAuthPacket()
+
+
     }
 
     public prop state: ConnectionState {
@@ -93,6 +95,36 @@ public class MysqlConnection <: Connection {
             plugin = String.fromUtf8(data[pos .. pos + end])
         }else {
             plugin = String.fromUtf8(data[pos ..])
+        }
+    }
+
+    private func handleAuthResult() {
+        // 读AuthSwitchRequest 内容
+        var (authData, newPlugin) = readAuthResult()
+        if (newPlugin != "") {
+            if (authData.size > 0) {
+                authData.copyTo(cipher, 0, 0, cipher.size)
+            } else {
+                authData = cipher
+            }
+        }
+        plugin = newPlugin
+        let authResp = ByteArrayUtils.scrambleCachingSha2(authData, config.password.toArray())
+        // 发送AuthSwitchResponse 
+        writeAuthSwitchPacket(authResp)
+    }
+
+    private func readAuthResult() {
+        let data = readPacket()
+        match(data[0]) {
+            case 254 =>
+                let pluginEndIndex =  ByteArrayUtils.indexByte(data, 0)
+                let plugin = String.fromUtf8(data[1 .. pluginEndIndex])
+                let authData = data[pluginEndIndex + 1 ..]
+                return (authData, plugin)
+            case _ => 
+                println("other, do later")
+                return (Array<Byte>(), "")
         }
     }
 
@@ -165,6 +197,14 @@ public class MysqlConnection <: Connection {
         }
         pos += 1
         plugin.toArray().copyTo(data, 0, pos, plugin.toArray().size)
+        writePacket(data)
+    }
+
+    private func writeAuthSwitchPacket(authData: Array<Byte>) {
+        let pktLen = authData.size
+
+        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+        authData.copyTo(data, 0, 4, authData.size)
         writePacket(data)
     }
 

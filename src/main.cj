@@ -127,28 +127,15 @@ import serialization.serialization.*
 import encoding.json.*
 import std.reflect.*
 import cangjieWeb.annotation.Validate
-
-public func validatorClass(o: Object) {
-    let info: ClassTypeInfo = ClassTypeInfo.of(o)
-    println("info.name = " + info.name)
-    println("info.qualifiedName = " + info.qualifiedName)
-    let instanceVariables = info.instanceVariables
-    for(variable in instanceVariables) {
-        println("variable.name = " + variable.name)
-        println("variable.typeInfo.name = " + variable.typeInfo.name)
-        println("variable.typeInfo.qualifiedName = " + variable.typeInfo.qualifiedName)
-        println((variable.getValue(o) as String).getOrDefault({ => ""}))
-        let validateAnnotation:Option<Validate> = variable.findAnnotation<Validate>()
-        match(validateAnnotation) {
-            case Some(v) => println("v.getValidate() = " + v.getValidate())
-            case None => println("None")
-        }
-    }
-}
+import std.database.sql.{DriverManager}
+import cangjieWeb.mysql.MySqlDatasource
 
 main() {
-    let school = School()
-    school.name = "myself school"
-    validatorClass(school)
-
+    let connectionString = "root:12345678@tcp(10.200.2.248:3306)/admin-api"
+    let opts = [
+        ("cachePrepStmts", "true")
+    ]
+    let drv = DriverManager.getDriver("mysql") ?? return
+    let ds = drv.open(connectionString, opts)
+    let connection = ds.connect()
 }
