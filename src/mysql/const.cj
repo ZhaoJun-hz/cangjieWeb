@@ -16,3 +16,10 @@ public let clientConnectAttrs:UInt32 = 1048576
 public let clientPluginAuthLenEncClientData:UInt32 = 2097152
 
 public let cachingSha2PasswordRequestPublicKey: Byte = UInt8(2)
+
+// COM_STMT_PREPARE_OK包第一部分status
+public let iOK: Byte = UInt8(0)
+
+
+// COM_STMT_PREPARE command
+public let comStmtPrepare: Byte = 22

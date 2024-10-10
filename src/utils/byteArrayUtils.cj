@@ -68,6 +68,10 @@ public class ByteArrayUtils {
         return UInt16(b[0]) | UInt16(b[1]) << 8
     }
 
+    public static func littleEndianUint32(b: Array<Byte>): UInt32 {
+        return UInt32(b[0]) | UInt32(b[1]) << 8 | UInt32(b[2]) << 16 | UInt32(b[3]) << 24
+    }
+
     private static var CACHING_SHA2_DIGEST_LENGTH = 32
     public static func scrambleCachingSha2(cipher: Array<Byte>, passwd: Array<Byte>):Array<Byte> {
         // 使用本包需要外部依赖 OpenSSL 3 的 crypto 动态库文件，故使用前需安装相关工具。
@@ -156,4 +160,43 @@ public class ByteArrayUtils {
         return result.toArray()
     }
 
+    /*
+        第一个返回值，the number
+        第二个返回值，数值是否为NULL
+        第三个返回值，所占字节数
+    */
+    public static func readLengthEncodeInteger(data: Array<Byte>): (UInt64, Bool, Int64) {
+        match(data[0]) {
+            case 251 => 
+                // NULL
+                return (0, true, 1)
+            case 252 =>
+                return(UInt64(data[1] )| UInt64(data[2])<<8, false, 3)
+            case 253 =>
+                return(UInt64(data[1] )| UInt64(data[2])<<8 | UInt64(data[3]) << 16, false, 4)
+            case 254 =>
+                return(UInt64(data[1] )| UInt64(data[2])<<8 | UInt64(data[3]) << 16 | UInt64(data[4]) << 24 | 
+                    UInt64(data[5]) << 32 | UInt64(data[6]) << 40| UInt64(data[7]) << 48| UInt64(data[8]) << 56, false, 9)
+            case _ =>
+                return(UInt64(data[0]), false, 1)
+        }
+    }
+    /*
+        第一个返回值，the number
+        第二个返回值，数值是否为NULL
+        第三个返回值，所占字节数
+    */
+    public static func readLengthEncodedString(data: Array<Byte>):(Array<Byte>, Bool, Int64) {
+        var (num, isNull, n) = readLengthEncodeInteger(data)
+        if (num < 1) {
+            return (data[n..n], isNull, n)
+        }
+
+        n += Int64(num)
+        if (data.size >= n) {
+            return (data[n - Int64(num) .. n], false ,n )
+        }
+
+        return (Array<Byte>(), false, n)
+    }
 }

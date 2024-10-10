@@ -138,4 +138,7 @@ main() {
     let drv = DriverManager.getDriver("mysql") ?? return
     let ds = drv.open(connectionString, opts)
     let connection = ds.connect()
+
+    let statement2 = connection.prepareStatement("select * from sys_dept where dept_type = ?;")
+
 }

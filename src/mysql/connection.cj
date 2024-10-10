@@ -1,6 +1,6 @@
 package cangjieWeb.mysql
 import std.database.sql.{Connection, ConnectionState, Transaction, Statement}
-import std.collection.{Map,HashMap}
+import std.collection.{Map,HashMap, ArrayList}
 import std.net.{TcpSocket, IPSocketAddress}
 import cangjieWeb.utils.{ByteArrayUtils}
 public class MysqlConnection <: Connection {
@@ -50,7 +50,7 @@ public class MysqlConnection <: Connection {
         HashMap([])
     }
     public func prepareStatement(sql: String): Statement {
-        return MySqlStatement()
+        return MySqlStatement(this, sql)
     }
     public func close(): Unit {
 
@@ -164,6 +164,74 @@ public class MysqlConnection <: Connection {
         }
     }
 
+    protected func readColumns(count: UInt16): ArrayList<MySqlField> {
+        let returnResult = ArrayList<MySqlField>()
+        for (i in 0..count) {
+            let data = readPacket()
+            var pos = 0
+            let mySqlField =  MySqlField()
+            // catalog
+            var (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data)
+            var catalog = String.fromUtf8(stringData)
+            pos += n
+
+            // schema database
+            (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
+            var database = String.fromUtf8(stringData)
+            pos += n
+
+            // table
+            (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
+            var tableName = String.fromUtf8(stringData)
+            pos += n
+            mySqlField.setTableName(tableName)
+
+            // org_table
+            (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
+            var orgTableName = String.fromUtf8(stringData)
+            pos += n
+
+            // name
+            (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
+            var name = String.fromUtf8(stringData)
+            mySqlField.setName(name)
+            pos += n
+
+            // org_name
+            (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
+            var orgName = String.fromUtf8(stringData)
+            pos += n
+
+            //  filter [0x0c]
+            pos ++
+
+            // character_set
+            mySqlField.setCharSet(ByteArrayUtils.littleEndianUint16(data[pos.. pos + 2]))
+            pos += 2
+
+            // column_length
+            mySqlField.setLength(ByteArrayUtils.littleEndianUint32(data[pos.. pos + 4]))
+            pos += 4
+
+            // type
+            mySqlField.setFieldType(UInt16(data[pos]))
+            pos ++
+
+            // flags
+            mySqlField.setFlags(ByteArrayUtils.littleEndianUint16(data[pos..pos + 2]))
+            pos += 2
+
+            // decimals
+            mySqlField.setDecimals(data[pos])
+            returnResult.append(mySqlField)
+        }
+
+        // 读EOF
+        let data = readPacket()
+
+        return returnResult
+    }
+
     private func writeAuthPacket() {
         // 4 clientFlags
         // 4 max packet size
@@ -247,6 +315,15 @@ public class MysqlConnection <: Connection {
     private func sendEncryptedPassword(publicKey: Array<Byte>) {
         let encrypted = ByteArrayUtils.scrambleRSA(config.password, publicKey, cipher)
         writeAuthSwitchPacket(encrypted)
+    }
+    
+    protected func writeCommandPacketStr(command: Byte, sql: String) {
+        sequence = 0
+        let pktLen = 1 + sql.toArray().size
+        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+        data[4] = command
+        sql.toArray().copyTo(data, 0, 5, sql.toArray().size)
+        writePacket(data)
     }
 
     protected func readPacket(): Array<Byte> {
