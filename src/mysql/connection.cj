@@ -10,7 +10,7 @@ public class MysqlConnection <: Connection {
     private let socket: TcpSocket
     private let buffer: Buffer
 
-    private var sequence: Byte = 0
+    protected var sequence: Byte = 0
     // 密码加密需要用的
     private var cipher: Array<Byte> = Array<Byte>()
     // 字符集

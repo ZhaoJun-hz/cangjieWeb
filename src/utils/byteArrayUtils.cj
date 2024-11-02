@@ -199,4 +199,27 @@ public class ByteArrayUtils {
 
         return (Array<Byte>(), false, n)
     }
+
+    public static func uint64ToBytes(n: UInt64): Array<Byte> {
+        let result = ArrayList<Byte>()
+        result.append(UInt8(n & 0xff))
+        result.append(UInt8(n >> 8 & 0xff))
+        result.append(UInt8(n >> 16 & 0xff))
+        result.append(UInt8(n >> 24 & 0xff))
+        result.append(UInt8(n >> 32 & 0xff))
+        result.append(UInt8(n >> 40 & 0xff))
+        result.append(UInt8(n >> 48 & 0xff))
+        result.append(UInt8(n >> 56 & 0xff))
+        return result.toArray()
+    }
+
+    public static func uint32ToBytes(n: UInt32): Array<Byte> {
+        let result = ArrayList<Byte>()
+        result.append(UInt8(n & 0xff))
+        result.append(UInt8(n >> 8 & 0xff))
+        result.append(UInt8(n >> 16 & 0xff))
+        result.append(UInt8(n >> 24 & 0xff))
+        return result.toArray()
+    }
+
 }

@@ -1,5 +1,5 @@
 package cangjieWeb.mysql
-import std.database.sql.{Statement, ColumnInfo, QueryResult, UpdateResult, SqlDbType}
+import std.database.sql.*
 import std.collection.{ArrayList}
 import cangjieWeb.utils.ByteArrayUtils
 public class MySqlStatement <: Statement {
@@ -60,4 +60,132 @@ public class MySqlStatement <: Statement {
         }
     }
 
+
+    private func writeExecutePacket(params: Array<SqlDbType>) {
+        connection.sequence = 0
+        // status 1
+        // statement_id 4
+        // flags 1
+        // iteration_count 4
+        // null_bitmap (paramater_count + 7) / 8
+        // new_params_bind_flag 1
+        // parameter_type paramCount * 2
+
+        var pktLen = 1 + 4 + 1 + 4 + (Int64(paramCount) + 7) / 8 + 1 + Int64(paramCount) * 2
+        let paramValues = ArrayList<Array<Byte>>()
+        let paramTypes = Array<Byte>(Int64(paramCount) * 2, item : 0)
+        var bitMask = UInt64(0)
+
+        for (i in 0 .. params.size) {
+            let param = params.get(i).getOrThrow()
+            match(param.name) {
+                case "SqlNullableBigInt" => 
+                    let temp = param as SqlNullableBigInt
+                    let value = temp.getOrThrow()
+                    match (value.value) {
+                        case Some(number) => 
+                            paramTypes[i<<1] = fieldTypeLongLong
+                            let appendValue = ByteArrayUtils.uint64ToBytes(UInt64(number))
+                            paramValues.append(appendValue)
+                            pktLen += 8
+                        case None => 
+                            bitMask += 1 << UInt64(i)
+                            paramTypes[i<<1] = fieldTypeNULL
+                            paramValues.append(Array<Byte>())
+                    }
+
+                case "SqlBigInt" => 
+                    let temp = param as SqlBigInt
+                    let value = temp.getOrThrow().value
+                    paramTypes[i<<1] = fieldTypeLongLong
+                    let appendValue = ByteArrayUtils.uint64ToBytes(UInt64(value))
+                    paramValues.append(appendValue)
+                    pktLen += 8
+
+                case "SqlNullableInteger" => 
+                    let temp = param as SqlNullableInteger
+                    let value = temp.getOrThrow()
+                    match (value.value) {
+                        case Some(number) => 
+                            paramTypes[i<<1] = fieldTypeLong
+                            let appendValue = ByteArrayUtils.uint32ToBytes(UInt32(number))
+                            paramValues.append(appendValue)
+                            pktLen += 4
+                        case None => 
+                            bitMask += 1 << UInt64(i)
+                            paramTypes[i<<1] = fieldTypeNULL
+                            paramValues.append(Array<Byte>())
+                    }
+
+                case "SqlInteger" => 
+                    let temp = param as SqlInteger
+                    let value = temp.getOrThrow().value
+                    paramTypes[i<<1] = fieldTypeLong
+                    let appendValue = ByteArrayUtils.uint32ToBytes(UInt32(value))
+                    paramValues.append(appendValue)
+                    pktLen += 4
+
+                case "SqlVarchar" =>
+                    let temp = param as SqlVarchar
+                    let value = temp.getOrThrow().value
+                    
+                    paramTypes[i<<1] = fieldTypeVarString
+                    let result = ArrayList<Byte>()
+
+                    var lengthBytes = ByteArrayUtils.appendLengthEncodedInteger(UInt64(value.toArray().size))
+                    result.appendAll(lengthBytes)
+                    result.appendAll(value.toArray())
+                    paramValues.append(result.toArray())
+                    pktLen = pktLen + result.toArray().size
+
+                case _ => println("unsupport data type")
+            }
+        }
+
+        // 包的长度计算好了
+        // bitMask => null_bitmap
+        // paramTypes  parameter_type
+        // paramValues  参数的值
+
+        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+
+        // status
+        data[4] = comStmtExecute
+
+        // statement_id
+        data[5] = UInt8(id)
+        data[6] = UInt8(id >> 8)
+        data[7] = UInt8(id >> 16)
+        data[8] = UInt8(id >> 24)
+        // data[9] flags 0 
+        // iteration_count 4 
+        data[10] = 0x01
+
+        if (paramCount > 0) {
+            // null_bitmap 结束下标
+            var pos = 14 + ((Int64(paramCount) + 7) / 8)
+            for (i in 14 .. pos) {
+                data[i] = UInt8(bitMask >> UInt64((i - 14) * 8))
+            }
+            // null_bitmap 填充好了
+            // new_params_bind_flag
+            data[pos] = 0x01
+            pos ++
+
+            // parameter_type
+            paramTypes.copyTo(data, 0, pos, paramTypes.size)
+            pos += paramTypes.size
+
+            // params value
+            for(i in 0 .. paramCount) {
+                let paramValue = paramValues[Int64(i)]
+                paramValue.copyTo(data, 0, pos, paramValue.toArray().size)
+                pos += paramValue.toArray().size
+            }
+        }
+        
+        // 包已经准备好了
+
+        connection.writePacket(data)
+    }
 }
