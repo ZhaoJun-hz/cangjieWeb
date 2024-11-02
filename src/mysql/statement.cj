@@ -12,6 +12,8 @@ public class MySqlStatement <: Statement {
     private let _parameters: Array<ColumnInfo> = Array<ColumnInfo>()
     private let _columns: Array<ColumnInfo> = Array<ColumnInfo>()
 
+    private var rowCount: Int64 = 0
+    private var lastInsertId: Int64 = 0
     init(connection: MysqlConnection, sql: String) {
         this.connection = connection
         this.sql = sql
@@ -187,5 +189,35 @@ public class MySqlStatement <: Statement {
         // 包已经准备好了
 
         connection.writePacket(data)
+    }
+
+    private func readRequstSetHeaderPacket(): Int64 {
+        let data = connection.readPacket()
+
+        match(data[0]) {
+            case 0 =>
+                // OK_Packet  affected_rows  last_insert_id
+                handleOkPacket(data[1..])
+                return 0
+
+            case 255 =>
+                // ERR_Packet
+                print("err here, do later")
+                return -1
+
+            case _ =>
+                // Binary Protocol Resultset
+                let (number, isNull, n) = ByteArrayUtils.readLengthEncodeInteger(data)
+                // 返回  column_count
+                return Int64(number)
+        }
+    
+    }
+
+    private func handleOkPacket(data: Array<Byte>) {
+        let (affectedRows, affectedRowsIsNull, n) = ByteArrayUtils.readLengthEncodeInteger(data)
+        let (insertId, insertIdIsNull, m) = ByteArrayUtils.readLengthEncodeInteger(data[n..])
+        rowCount = Int64(affectedRows)
+        lastInsertId = Int64(insertId)
     }
 }
