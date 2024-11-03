@@ -120,18 +120,23 @@
 //     test.Get("download", download)
 //     engine.run()
 // }
-
 package cangjieWeb
 import cangjieWeb.model.School
 import serialization.serialization.*
 import encoding.json.*
 import std.reflect.*
 import cangjieWeb.annotation.Validate
-import std.database.sql.{DriverManager}
+import std.database.sql.*
 import cangjieWeb.mysql.MySqlDatasource
+import std.collection.ArrayList
 
 main() {
-    let connectionString = "root:12345678@tcp(10.200.2.248:3306)/admin-api"
+
+    testNull()
+}
+
+func testNull() {
+    let connectionString = "root:QWERtyui1234@tcp(10.166.66.13:3306)/admin-api"
     let opts = [
         ("cachePrepStmts", "true")
     ]
@@ -139,6 +144,37 @@ main() {
     let ds = drv.open(connectionString, opts)
     let connection = ds.connect()
 
-    let statement2 = connection.prepareStatement("select * from sys_dept where dept_type = ?;")
+    let deleteTable = """
+        drop table if exists `sys_dept_null`;
+    """
+    let deleteTableStatement = connection.prepareStatement(deleteTable)
+    let deleteTableParams = ArrayList<SqlDbType>()
+    let deleteTableResult = deleteTableStatement.update(deleteTableParams.toArray())
+    println("delete table sys_dept_null if exists success")
 
+    let createTable = """
+        CREATE TABLE `sys_dept_null` (
+            `id` int NOT NULL AUTO_INCREMENT COMMENT '主键',
+            `parent_id` int COMMENT '父id',
+            `dept_type` int COMMENT '部门类型（1->公司, 2->中心，3->部门）',
+            `dept_name` varchar(30) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '部门名称',
+            `dept_status` int COMMENT '部门状态（1->正常 2->停用）',
+            PRIMARY KEY (`id`) USING BTREE,
+            UNIQUE KEY `dept_name` (`dept_name`) USING BTREE
+        ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin ROW_FORMAT=DYNAMIC COMMENT='部门表';"""
+
+    let createTableStatement = connection.prepareStatement(createTable)
+    let createTableParams= ArrayList<SqlDbType>()
+    let createTableResult = createTableStatement.update(createTableParams.toArray())
+    println("create table sys_dept success")
+
+    let insertTable = """
+        INSERT INTO `admin-api`.sys_dept_null(parent_id, dept_type, dept_name, dept_status) VALUES(?, ?, ?, ?);""" 
+    let insertTableStatement = connection.prepareStatement(insertTable)
+
+    var companyUpdateResult = insertTableStatement.update(SqlNullableInteger(None), SqlInteger(1), SqlVarchar("cangjie company"),SqlNullableInteger(None))
+
+    var heNanUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("henan center"), SqlNullableInteger(None))
+   
+    var zheJiangUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("zhejiang center"), SqlNullableInteger(None))
 }

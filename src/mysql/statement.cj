@@ -35,7 +35,13 @@ public class MySqlStatement <: Statement {
 
     }
     public func update(params: Array<SqlDbType>): UpdateResult {
-        return MySqlUpdateResult()
+
+        // 发送 
+        writeExecutePacket(params)
+
+        // 拿结果
+        readRequstSetHeaderPacket()
+        return MySqlUpdateResult(rowCount, lastInsertId)
     }
 
     public func close(): Unit {
