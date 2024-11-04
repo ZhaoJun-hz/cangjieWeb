@@ -5,7 +5,6 @@ import std.collection.{ArrayList}
 import std.convert.{Parsable}
 import encoding.url.{Form}
 import std.fs.{Path, File, OpenOption}
-import std.os.{currentDir}
 class FormDataParse {
     private let bodyStream: InputStream
     private let contentType: String
@@ -37,7 +36,7 @@ class FormDataParse {
         let bodySeparator = getBodySeparator(boundary)
         let length = Int64.parse(this.contentLength) 
 
-        let bodyResult = Array<Byte>(length, item:0)
+        let bodyResult = Array<Byte>(length, repeat:0)
         let bufferedInputStream = BufferedInputStream(this.bodyStream)
         // 获取真实请求的字节数组
         bufferedInputStream.read(bodyResult)

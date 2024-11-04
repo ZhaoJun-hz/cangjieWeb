@@ -125,7 +125,7 @@ public class MysqlConnection <: Connection {
                                 // full authentication
                                 // request public key
                                 let pkeLen = 1
-                                let data = Array<Byte>(pkeLen + 4, item: UInt8(0))
+                                let data = Array<Byte>(pkeLen + 4, repeat: UInt8(0))
 
                                 data[4] = cachingSha2PasswordRequestPublicKey
                                 // 获取公钥 请求
@@ -269,7 +269,7 @@ public class MysqlConnection <: Connection {
             pktLen += config.dbname.toArray().size + 1
         }
         // 包头
-        let data = Array<Byte>(pktLen + 4, item: 0)
+        let data = Array<Byte>(pktLen + 4, repeat: 0)
 
         data[4] = UInt8(clientFlags & 0xff)
         data[5] = UInt8(clientFlags >> 8 & 0xff)
@@ -307,7 +307,7 @@ public class MysqlConnection <: Connection {
     private func writeAuthSwitchPacket(authData: Array<Byte>) {
         let pktLen = authData.size
 
-        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+        let data = Array<Byte>(pktLen + 4, repeat: UInt8(0))
         authData.copyTo(data, 0, 4, authData.size)
         writePacket(data)
     }
@@ -320,7 +320,7 @@ public class MysqlConnection <: Connection {
     protected func writeCommandPacketStr(command: Byte, sql: String) {
         sequence = 0
         let pktLen = 1 + sql.toArray().size
-        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+        let data = Array<Byte>(pktLen + 4, repeat: UInt8(0))
         data[4] = command
         sql.toArray().copyTo(data, 0, 5, sql.toArray().size)
         writePacket(data)

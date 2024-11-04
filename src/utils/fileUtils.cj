@@ -1,8 +1,8 @@
 package cangjieWeb.utils
-import std.os.currentDir
-import std.fs.{File, Path}
+import std.process.*
+import std.fs.{File, Path, exists}
 public class FileUtils {
-    public static let fileSeparator: String = if(currentDir().info.path.toString().contains("\\")) {
+    public static let fileSeparator: String = if(Process.current.workingDirectory.toString().contains("\\")) {
         "\\\\"
     }else {
         "/"
@@ -10,7 +10,7 @@ public class FileUtils {
 
     public func fileExist(path: String) {
         let filePath = Path(path)
-        if (File.exists(filePath)) {
+        if (exists(filePath)) {
             return true
         } 
         return false

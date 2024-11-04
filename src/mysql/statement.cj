@@ -81,7 +81,7 @@ public class MySqlStatement <: Statement {
 
         var pktLen = 1 + 4 + 1 + 4 + (Int64(paramCount) + 7) / 8 + 1 + Int64(paramCount) * 2
         let paramValues = ArrayList<Array<Byte>>()
-        let paramTypes = Array<Byte>(Int64(paramCount) * 2, item : 0)
+        let paramTypes = Array<Byte>(Int64(paramCount) * 2, repeat : 0)
         var bitMask = UInt64(0)
 
         for (i in 0 .. params.size) {
@@ -155,7 +155,7 @@ public class MySqlStatement <: Statement {
         // paramTypes  parameter_type
         // paramValues  参数的值
 
-        let data = Array<Byte>(pktLen + 4, item: UInt8(0))
+        let data = Array<Byte>(pktLen + 4, repeat: UInt8(0))
 
         // status
         data[4] = comStmtExecute

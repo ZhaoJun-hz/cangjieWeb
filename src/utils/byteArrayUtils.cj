@@ -2,7 +2,7 @@ package cangjieWeb.utils
 import std.collection.{ArrayList}
 import crypto.digest.{SHA256, SHA1}
 import crypto.keys.{RSAPublicKey, PadOption, OAEPOption}
-import std.io.ByteArrayStream
+import std.io.ByteBuffer
 public class ByteArrayUtils {
     // 判断两个Array<Byte>数组是否相等，相等，返回true，否则，返回false
     public static func judgeByteArrayEqual(source: Array<Byte>, dest: Array<Byte>): Bool {
@@ -77,9 +77,9 @@ public class ByteArrayUtils {
         // 使用本包需要外部依赖 OpenSSL 3 的 crypto 动态库文件，故使用前需安装相关工具。
         // 并配置环境变量
         var sha2Instance = SHA256()
-        var dig1 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, item: 0)
-        var dig2 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, item: 0)
-        var scramble1 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, item: 0)
+        var dig1 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, repeat: 0)
+        var dig2 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, repeat: 0)
+        var scramble1 = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, repeat: 0)
         
         sha2Instance.write(passwd)
         dig1 = sha2Instance.finish()
@@ -91,7 +91,7 @@ public class ByteArrayUtils {
         sha2Instance.write(cipher)
         scramble1 = sha2Instance.finish()
         sha2Instance.reset()
-        var mysqlScrambleBuff = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, item: 0)
+        var mysqlScrambleBuff = Array<Byte>(CACHING_SHA2_DIGEST_LENGTH, repeat: 0)
         xorString(dig1, mysqlScrambleBuff, scramble1, CACHING_SHA2_DIGEST_LENGTH)
         return mysqlScrambleBuff
     }
@@ -99,26 +99,26 @@ public class ByteArrayUtils {
     public static func scrambleRSA(password: String, publicKey: Array<Byte>, cipher: Array<Byte>): Array<Byte> {
         var input: Array<Byte>
         if(password.toArray().size == 0) {
-            input = Array<Byte>(1, item: 0)
+            input = Array<Byte>(1, repeat: 0)
         } else {
-            input = Array<Byte>(password.toArray().size + 1, item: 0)
+            input = Array<Byte>(password.toArray().size + 1, repeat: 0)
             password.toArray().copyTo(input, 0, 0, password.toArray().size)
             input[password.toArray().size] = 0
         }
 
-        var mysqlScrambleBuff = Array<Byte>(input.size, item: 0)
+        var mysqlScrambleBuff = Array<Byte>(input.size, repeat: 0)
         xorString(input, mysqlScrambleBuff, cipher, input.size)
         var rsaPub = RSAPublicKey.decodeFromPem(String.fromUtf8(publicKey))
        
-        var byteArraySteam1 = ByteArrayStream()
+        var byteArraySteam1 = ByteBuffer()
         byteArraySteam1.write(mysqlScrambleBuff)
         
-        var byteArraySteam2 = ByteArrayStream()
+        var byteArraySteam2 = ByteBuffer()
         var opt = OAEPOption(SHA1(),SHA1())
         rsaPub.encrypt(byteArraySteam1,byteArraySteam2,padType:OAEP(opt))
-        var buffer = Array<Byte>(1024, item: 0)
+        var buffer = Array<Byte>(1024, repeat: 0)
         var len = byteArraySteam2.read(buffer)
-        var res = Array<Byte>(len, item: 0)
+        var res = Array<Byte>(len, repeat: 0)
         buffer.copyTo(res, 0, 0, len)
         return res
     }

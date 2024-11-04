@@ -13,7 +13,7 @@ public class Buffer {
 
     init(socket: TcpSocket) {
         this.socket = socket
-        this.buf = Array<Byte>(4096, item: 0)
+        this.buf = Array<Byte>(4096, repeat: 0)
     }
 
     // readNext、fill、grow
@@ -45,7 +45,7 @@ public class Buffer {
     }
     // 扩容，创建一个更大byte 数组
     public func grow(need: Int64) {
-        let newBuf = Array<Byte>(need, item: 0)
+        let newBuf = Array<Byte>(need, repeat: 0)
         buf.copyTo(newBuf, 0, 0, length)
         this.buf = newBuf
     }

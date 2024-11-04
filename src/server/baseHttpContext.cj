@@ -3,8 +3,9 @@ import serialization.serialization.{Serializable}
 import encoding.json.ToJson
 import encoding.url.{Form}
 import net.http.{HttpContext, HttpStatusCode}
-import std.fs.{Path, File, OpenOption}
+import std.fs.{Path, File, OpenOption, exists, remove}
 import cangjieWeb.utils.FileUtils
+import std.io.readToEnd
 public class BaseHttpContext {
     private let context: HttpContext 
     private var formInitFlag: Bool
@@ -47,8 +48,8 @@ public class BaseHttpContext {
 
     public func saveUploadFile(name: String, path: String) {
         let filePath = Path(path)
-        if(File.exists(filePath)) {
-            File.delete(filePath)
+        if(exists(filePath)) {
+            remove(filePath)
         }
         var saveFile = File(filePath, OpenOption.Create(false))
         let fileFormInfo = this.formCache.getFile(name).getOrDefault({=> FileFormInfo("", Array<Byte>())})
@@ -93,12 +94,12 @@ public class BaseHttpContext {
         var fileInfo: File = File(filePath, OpenOption.Open(true, false))
         this.context.responseBuilder
             // Content-Disposition: attachment; filename=file5983940017135638617.tmp.txt
-            .header("Content-Disposition", "attachment; filename=${fileInfo.info.path.fileName.getOrDefault({ => ""})}")
+            .header("Content-Disposition", "attachment; filename=${fileInfo.info.path.fileName}")
             // Content-Type: application/octet-stream;
             .header("Content-Type", "application/octet-stream;")
             // Content-Length: 16
             .header("Content-Length", "${fileInfo.length}")
-            .body(fileInfo.readToEnd())
+            .body(readToEnd(fileInfo))
 }
 
     private func queryInit() {
