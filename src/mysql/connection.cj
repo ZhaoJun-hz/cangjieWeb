@@ -232,6 +232,20 @@ public class MysqlConnection <: Connection {
         return returnResult
     }
 
+    protected func readRows():ArrayList<Array<Byte>> {
+        let result = ArrayList<Array<Byte>>()
+        while(true) {
+            let data = readPacket()
+            match(data[0]) {
+                case 254 =>
+                    break;
+                case _ =>
+                    result.append(data)
+            }
+        }
+        return result
+    }
+
     private func writeAuthPacket() {
         // 4 clientFlags
         // 4 max packet size

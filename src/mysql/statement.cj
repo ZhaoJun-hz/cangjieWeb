@@ -29,7 +29,22 @@ public class MySqlStatement <: Statement {
         }
     }
     public func query(params: Array<SqlDbType>): QueryResult {
-        return MysqlQueryResult()
+        // 发送 
+        writeExecutePacket(params)
+
+        // 拿结果
+        let columnNumber = readRequstSetHeaderPacket()
+
+        var columns: ArrayList<MySqlField> = ArrayList<MySqlField>()
+        var rows: ArrayList<Array<Byte>> = ArrayList<Array<Byte>>()
+
+        if (columnNumber > 0) {
+            // columns 列定义信息
+            columns = this.connection.readColumns(UInt16(columnNumber))
+            // rows
+            rows = this.connection.readRows()
+        }
+        return MysqlQueryResult(columns, rows)
     }
     public func setOption(key: String, value: String): Unit {
 
