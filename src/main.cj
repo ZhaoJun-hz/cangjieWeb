@@ -136,7 +136,7 @@ main() {
 }
 
 func testNull() {
-    let connectionString = "root:QWERtyui1234@tcp(10.166.66.13:3306)/admin-api"
+    let connectionString = "root:QWERtyui1234@tcp(10.166.66.14:3306)/admin-api"
     let opts = [
         ("cachePrepStmts", "true")
     ]
@@ -159,6 +159,9 @@ func testNull() {
             `dept_type` int COMMENT '部门类型（1->公司, 2->中心，3->部门）',
             `dept_name` varchar(30) CHARACTER SET utf8mb3 COLLATE utf8mb3_bin NOT NULL COMMENT '部门名称',
             `dept_status` int COMMENT '部门状态（1->正常 2->停用）',
+            `create_time` int COMMENT '创建时间',
+            `update_time` int COMMENT '更新时间',
+            `delete_time` int COMMENT '删除时间',
             PRIMARY KEY (`id`) USING BTREE,
             UNIQUE KEY `dept_name` (`dept_name`) USING BTREE
         ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_bin ROW_FORMAT=DYNAMIC COMMENT='部门表';"""
@@ -169,12 +172,37 @@ func testNull() {
     println("create table sys_dept success")
 
     let insertTable = """
-        INSERT INTO `admin-api`.sys_dept_null(parent_id, dept_type, dept_name, dept_status) VALUES(?, ?, ?, ?);""" 
+        INSERT INTO `admin-api`.sys_dept_null(parent_id, dept_type, dept_name, dept_status, create_time, update_time, delete_time) VALUES(?, ?, ?, ?, ?, ?, ?);""" 
     let insertTableStatement = connection.prepareStatement(insertTable)
 
-    var companyUpdateResult = insertTableStatement.update(SqlNullableInteger(None), SqlInteger(1), SqlVarchar("cangjie company"),SqlNullableInteger(None))
+    var companyUpdateResult = insertTableStatement.update(SqlNullableInteger(None), SqlInteger(1), SqlVarchar("cangjie company"),
+        SqlNullableInteger(None), SqlNullableInteger(None), SqlInteger(1), SqlInteger(2))
 
-    var heNanUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("henan center"), SqlNullableInteger(None))
+    var heNanUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("henan center"), 
+        SqlNullableInteger(None),SqlInteger(1),SqlNullableInteger(None), SqlInteger(2))
    
-    var zheJiangUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("zhejiang center"), SqlNullableInteger(None))
+    var zheJiangUpdateResult = insertTableStatement.update(SqlInteger(Int32(companyUpdateResult.lastInsertId)), SqlInteger(2), SqlVarchar("zhejiang center"), 
+        SqlNullableInteger(None), SqlInteger(1),SqlInteger(2),SqlNullableInteger(None))
+
+    let id = SqlInteger(0)
+    let parentId = SqlNullableInteger(None)
+    let deptType = SqlNullableInteger(None)
+    let deptName = SqlVarchar("")
+    let deptStatus = SqlNullableInteger(None)
+    let createTime = SqlNullableInteger(None)
+    let updateTime = SqlNullableInteger(None)
+    let deleteTime = SqlNullableInteger(None)
+
+    let statement = connection.prepareStatement("select * from `sys_dept_null`;")
+    let param = ArrayList<SqlDbType>()
+    let queryResult = statement.query(param.toArray())
+    var tempIndex = 1
+    println("query sys_dept all data")
+    while(queryResult.next(id, parentId, deptType, deptName, deptStatus, createTime, updateTime, deleteTime)) {
+        println(" ${tempIndex} rows data, id = ${id.value}, parentId = ${parentId.value}, " + 
+            "deptType = ${deptType.value}, deptName = ${deptName.value}, deptStatus = ${deptStatus.value}, " +
+            "createTime = ${createTime.value}, updateTime = ${updateTime.value}, deleteTime = ${deleteTime.value}"
+        )
+        tempIndex ++ 
+    }
 }
