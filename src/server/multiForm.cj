@@ -1,5 +1,5 @@
 package cangjieWeb.server
-import encoding.url.Form
+import stdx.encoding.url.Form
 import std.collection.HashMap
 class MultiForm {
     private var formCache: Form
@@ -19,7 +19,7 @@ class MultiForm {
     }
 
     public func addFile(file:String, filename: String, content: Array<Byte>) {
-        this.files.put(file, FileFormInfo(filename, content))
+        this.files.add(file, FileFormInfo(filename, content))
     }
 
     public func getFile(file: String) {

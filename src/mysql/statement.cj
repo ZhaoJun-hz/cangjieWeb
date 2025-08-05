@@ -9,8 +9,10 @@ public class MySqlStatement <: Statement {
     private var id: UInt32 = 0
     private var columnCount: UInt16 = 0
     private var paramCount: UInt16 = 0
-    private let _parameters: Array<ColumnInfo> = Array<ColumnInfo>()
-    private let _columns: Array<ColumnInfo> = Array<ColumnInfo>()
+    private var _parametersInfo: Array<ColumnInfo> = Array<ColumnInfo>()
+    private var _columns: Array<ColumnInfo> = Array<ColumnInfo>()
+
+    private var parameters: Array<Any> = Array<Any>()
 
     private var rowCount: Int64 = 0
     private var lastInsertId: Int64 = 0
@@ -21,21 +23,29 @@ public class MySqlStatement <: Statement {
         this.connection.writeCommandPacketStr(comStmtPrepare, sql)
         // 接COM_STMT_PREPARE_OK
         readPrepareResultPacket()
+        this.parameters = Array<Any>(Int64(this.paramCount), repeat: Option<Any>.None)
     }
 
     public prop parameterColumnInfos: Array<ColumnInfo> {
         get() {
-            return _parameters
+            return _parametersInfo
         }
     }
-    public func query(params: Array<SqlDbType>): QueryResult {
-        // 发送 
-        writeExecutePacket(params)
 
+    public func set<T>(index: Int, value: T): Unit {
+        parameters[index - 1] = value
+    }
+
+    public func setNull(index: Int): Unit {
+        parameters[index - 1] = Option<Any>.None
+    }
+
+    public func query(): QueryResult {
+        writeExecutePacket(parameters)
         // 拿结果
         let columnNumber = readRequstSetHeaderPacket()
 
-        var columns: ArrayList<MySqlField> = ArrayList<MySqlField>()
+        var columns: ArrayList<ColumnInfo> = ArrayList<ColumnInfo>()
         var rows: ArrayList<Array<Byte>> = ArrayList<Array<Byte>>()
 
         if (columnNumber > 0) {
@@ -46,17 +56,27 @@ public class MySqlStatement <: Statement {
         }
         return MysqlQueryResult(columns, rows)
     }
+
+    public func update(): UpdateResult {
+        // 发送 
+        writeExecutePacket(parameters)
+        // 拿结果
+        readRequstSetHeaderPacket()
+        this.parameters = Array<Any>(Int64(this.paramCount), repeat: Option<Any>.None)
+        return MySqlUpdateResult(rowCount, lastInsertId)
+    }
+
+    @Deprecated
+    public func query(params: Array<SqlDbType>): QueryResult {
+       throw Exception("Deprecated method")
+    }
     public func setOption(key: String, value: String): Unit {
 
     }
+
+    @Deprecated
     public func update(params: Array<SqlDbType>): UpdateResult {
-
-        // 发送 
-        writeExecutePacket(params)
-
-        // 拿结果
-        readRequstSetHeaderPacket()
-        return MySqlUpdateResult(rowCount, lastInsertId)
+        throw Exception("Deprecated method")
     }
 
     public func close(): Unit {
@@ -72,19 +92,19 @@ public class MySqlStatement <: Statement {
             println("error here, do later")
         }
 
-        id = ByteArrayUtils.littleEndianUint32(data[1..5])
-        columnCount = ByteArrayUtils.littleEndianUint16(data[5..7])
-        paramCount = ByteArrayUtils.littleEndianUint16(data[7..9])
+        this.id = ByteArrayUtils.littleEndianUint32(data[1..5])
+        this.columnCount = ByteArrayUtils.littleEndianUint16(data[5..7])
+        this.paramCount = ByteArrayUtils.littleEndianUint16(data[7..9])
         if (paramCount > 0) {
-            let params:ArrayList<MySqlField> = this.connection.readColumns(paramCount)
+            this._parametersInfo = this.connection.readColumns(paramCount).toArray()
         }
         if (columnCount > 0) {
-            let columns:ArrayList<MySqlField> =  this.connection.readColumns(columnCount)
+            this._columns =  this.connection.readColumns(columnCount).toArray()
         }
     }
 
 
-    private func writeExecutePacket(params: Array<SqlDbType>) {
+    private func writeExecutePacket(params: Array<Any>) {
         connection.sequence = 0
         // status 1
         // statement_id 4
@@ -100,68 +120,34 @@ public class MySqlStatement <: Statement {
         var bitMask = UInt64(0)
 
         for (i in 0 .. params.size) {
-            let param = params.get(i).getOrThrow()
-            match(param.name) {
-                case "SqlNullableBigInt" => 
-                    let temp = param as SqlNullableBigInt
-                    let value = temp.getOrThrow()
-                    match (value.value) {
-                        case Some(number) => 
-                            paramTypes[i<<1] = fieldTypeLongLong
-                            let appendValue = ByteArrayUtils.uint64ToBytes(UInt64(number))
-                            paramValues.append(appendValue)
-                            pktLen += 8
-                        case None => 
-                            bitMask += 1 << UInt64(i)
-                            paramTypes[i<<1] = fieldTypeNULL
-                            paramValues.append(Array<Byte>())
-                    }
-
-                case "SqlBigInt" => 
-                    let temp = param as SqlBigInt
-                    let value = temp.getOrThrow().value
+            
+            match(params[i]) {
+                case v: Int64 => 
                     paramTypes[i<<1] = fieldTypeLongLong
-                    let appendValue = ByteArrayUtils.uint64ToBytes(UInt64(value))
-                    paramValues.append(appendValue)
+                    let appendValue = ByteArrayUtils.uint64ToBytes(UInt64(v))
+                    paramValues.add(appendValue)
                     pktLen += 8
-
-                case "SqlNullableInteger" => 
-                    let temp = param as SqlNullableInteger
-                    let value = temp.getOrThrow()
-                    match (value.value) {
-                        case Some(number) => 
-                            paramTypes[i<<1] = fieldTypeLong
-                            let appendValue = ByteArrayUtils.uint32ToBytes(UInt32(number))
-                            paramValues.append(appendValue)
-                            pktLen += 4
-                        case None => 
-                            bitMask += 1 << UInt64(i)
-                            paramTypes[i<<1] = fieldTypeNULL
-                            paramValues.append(Array<Byte>())
-                    }
-
-                case "SqlInteger" => 
-                    let temp = param as SqlInteger
-                    let value = temp.getOrThrow().value
+                case v: Int32 =>
                     paramTypes[i<<1] = fieldTypeLong
-                    let appendValue = ByteArrayUtils.uint32ToBytes(UInt32(value))
-                    paramValues.append(appendValue)
+                    let appendValue = ByteArrayUtils.uint32ToBytes(UInt32(v))
+                    paramValues.add(appendValue)
                     pktLen += 4
-
-                case "SqlVarchar" =>
-                    let temp = param as SqlVarchar
-                    let value = temp.getOrThrow().value
-                    
+                case v: String =>
                     paramTypes[i<<1] = fieldTypeVarString
                     let result = ArrayList<Byte>()
 
-                    var lengthBytes = ByteArrayUtils.appendLengthEncodedInteger(UInt64(value.toArray().size))
-                    result.appendAll(lengthBytes)
-                    result.appendAll(value.toArray())
-                    paramValues.append(result.toArray())
+                    var lengthBytes = ByteArrayUtils.appendLengthEncodedInteger(UInt64(v.toArray().size))
+                    result.add(all: lengthBytes)
+                    result.add(all: v.toArray())
+                    paramValues.add(result.toArray())
                     pktLen = pktLen + result.toArray().size
-
-                case _ => println("unsupport data type")
+                case v: ?Any => 
+                    if(v.isNone()) {
+                        bitMask += 1 << UInt64(i)
+                        paramTypes[i<<1] = fieldTypeNULL
+                        paramValues.add(Array<Byte>())
+                    }
+                case _ => throw Exception("unsupport type")
             }
         }
 

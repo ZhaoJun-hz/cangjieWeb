@@ -1,5 +1,5 @@
 package cangjieWeb.server
-import net.http.{HttpRequestHandler}
+import stdx.net.http.{HttpRequestHandler}
 import std.collection.{HashMap, ArrayList}
 
 public class Router{
@@ -11,7 +11,7 @@ public class Router{
 
     public func addRouterGroup(path: String) {
         let routerGroup = RouterGroup(path)
-        this.routerGroups.append(routerGroup)
+        this.routerGroups.add(routerGroup)
         return routerGroup
     }
 

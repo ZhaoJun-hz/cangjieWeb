@@ -1,7 +1,7 @@
 package cangjieWeb.model
 import cangjieWeb.macros.Json
-import serialization.serialization.*
-import encoding.json.*
+import stdx.serialization.serialization.*
+import stdx.encoding.json.*
 @Json
 public class Student {
     public var name: String = "闲不下来的程序猿"

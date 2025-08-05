@@ -1,5 +1,5 @@
 package cangjieWeb.server
-import net.http.{HttpRequestDistributor, FuncHandler, HttpRequestHandler}
+import stdx.net.http.{HttpRequestDistributor, FuncHandler, HttpRequestHandler}
 class BaseDistrubutor <: HttpRequestDistributor {
     private var handler: HttpRequestHandler
 

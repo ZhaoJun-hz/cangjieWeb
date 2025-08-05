@@ -1,7 +1,7 @@
 macro package cangjieWeb.macros
 import std.ast.*
-import serialization.serialization.*
-import encoding.json.*
+import stdx.serialization.serialization.*
+import stdx.encoding.json.*
 import std.collection.*
 
 class VarDeclVisitor <: Visitor {
@@ -12,7 +12,7 @@ class VarDeclVisitor <: Visitor {
     }
 
     public override func visit(VarDecl: VarDecl) {
-        varDecls.append(VarDecl)
+        varDecls.add(VarDecl)
         breakTraverse()
         return
     }
@@ -53,7 +53,7 @@ class JsonConvert {
         this.classId = classId
         this.fields = ArrayList<JsonFiledConvert>()
         for(vd in vars) {
-            this.fields.append(JsonFiledConvert(vd))
+            this.fields.add(JsonFiledConvert(vd))
         }
     }
     public func generateSerialize(): Tokens {

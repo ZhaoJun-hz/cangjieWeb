@@ -1,5 +1,5 @@
 package cangjieWeb.model
-import serialization.serialization.{Serializable, DataModel, DataModelStruct, field}
+import stdx.serialization.serialization.{Serializable, DataModel, DataModelStruct, field}
 
 public class User <: Serializable<User> {
 

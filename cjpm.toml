@@ -1,7 +1,7 @@
 [dependencies]
 
 [package]
-  cjc-version = "0.51.4"
+  cjc-version = "1.0.0"
   compile-option = ""
   description = "nothing here"
   link-option = ""
@@ -11,3 +11,20 @@
   target-dir = ""
   version = "1.0.0"
   package-configuration = {}
+
+[target]
+  [target.x86_64-w64-mingw32]
+    [target.x86_64-w64-mingw32.bin-dependencies]
+      path-option = [ "${CANGJIE_STDX_PATH}" ]
+  [target.x86_64-unknown-linux-gnu]
+    [target.x86_64-unknown-linux-gnu.bin-dependencies]
+      path-option = [ "${CANGJIE_STDX_PATH}" ]
+  [target.x86_64-apple-darwin]
+    [target.x86_64-apple-darwin.bin-dependencies]
+      path-option = [ "${CANGJIE_STDX_PATH}" ]
+  [target.aarch64-unknown-linux-gnu]
+    [target.aarch64-unknown-linux-gnu.bin-dependencies]
+      path-option = [ "${CANGJIE_STDX_PATH}" ]
+  [target.aarch64-apple-darwin]
+    [target.aarch64-apple-darwin.bin-dependencies]
+      path-option = [ "${CANGJIE_STDX_PATH}" ]

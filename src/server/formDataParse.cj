@@ -3,8 +3,8 @@ import cangjieWeb.utils.ByteArrayUtils
 import std.io.{InputStream,BufferedInputStream}
 import std.collection.{ArrayList}
 import std.convert.{Parsable}
-import encoding.url.{Form}
-import std.fs.{Path, File, OpenOption}
+import stdx.encoding.url.{Form}
+import std.fs.{Path, File, OpenMode}
 class FormDataParse {
     private let bodyStream: InputStream
     private let contentType: String
@@ -46,13 +46,13 @@ class FormDataParse {
             if (i != splitByteArray.size - 1) {
                 let contentByteArray = ByteArrayUtils.splitByteArray(splitByteArray[i], "\r\n\r\n".toArray(), dropLast: false)
                 // TODO 这里可以将 contentByteArray 打印一下，以及对应的值
-                result.append(BodyPart(contentByteArray[0], contentByteArray[1]))
+                result.add(BodyPart(contentByteArray[0], contentByteArray[1]))
             } else {
                 // 最后一个元素
                 let stopIndex = splitByteArray[i].size - bodySeparator.size - 2
                 let contentByteArray = ByteArrayUtils.splitByteArray(splitByteArray[i][0..stopIndex], "\r\n\r\n".toArray(), dropLast: false)
                 // TODO 这里可以将 contentByteArray 打印一下，以及对应的值
-                result.append(BodyPart(contentByteArray[0], contentByteArray[1]))
+                result.add(BodyPart(contentByteArray[0], contentByteArray[1]))
             }
             
         }

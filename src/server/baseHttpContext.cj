@@ -1,9 +1,9 @@
 package cangjieWeb.server
-import serialization.serialization.{Serializable}
-import encoding.json.ToJson
-import encoding.url.{Form}
-import net.http.{HttpContext, HttpStatusCode}
-import std.fs.{Path, File, OpenOption, exists, remove}
+import stdx.serialization.serialization.{Serializable, DataModel}
+import stdx.encoding.json.ToJson
+import stdx.encoding.url.{Form}
+import stdx.net.http.{HttpContext, HttpStatusCode}
+import std.fs.{Path, File, OpenMode, exists, remove}
 import cangjieWeb.utils.FileUtils
 import std.io.readToEnd
 public class BaseHttpContext {
@@ -51,7 +51,7 @@ public class BaseHttpContext {
         if(exists(filePath)) {
             remove(filePath)
         }
-        var saveFile = File(filePath, OpenOption.Create(false))
+        var saveFile = File(filePath, OpenMode.Write)
         let fileFormInfo = this.formCache.getFile(name).getOrDefault({=> FileFormInfo("", Array<Byte>())})
         saveFile.write(fileFormInfo.getContent())
         saveFile.close()
@@ -91,7 +91,7 @@ public class BaseHttpContext {
             String(HttpStatusCode.STATUS_NOT_FOUND, "文件不存在")
         }
 
-        var fileInfo: File = File(filePath, OpenOption.Open(true, false))
+        var fileInfo: File = File(filePath, OpenMode.Read)
         this.context.responseBuilder
             // Content-Disposition: attachment; filename=file5983940017135638617.tmp.txt
             .header("Content-Disposition", "attachment; filename=${fileInfo.info.path.fileName}")

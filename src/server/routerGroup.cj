@@ -26,7 +26,7 @@ public class RouterGroup {
     }
 
     public func Use(middlewares: Array<MiddlewaresFunc>) {
-        this.middlewares.appendAll(middlewares)
+        this.middlewares.add(all: middlewares)
     }
 
     public func Get(name:String, handler: HandlerFunc, middlewares: Array<MiddlewaresFunc>) {
@@ -57,13 +57,13 @@ public class RouterGroup {
         if (this.routers[path].contains(method)) {
             println("groupPath = ${this.getName()} routerPath = ${path} method = ${method} already register")
         }
-        this.routers[path].put(method, handler)
+        this.routers[path].add(method, handler)
         if (!handlerMethodMiddlewares[path].contains(method)) {
-            handlerMethodMiddlewares[path].put(method, ArrayList<MiddlewaresFunc>())
+            handlerMethodMiddlewares[path].add(method, ArrayList<MiddlewaresFunc>())
         }
         // 给TreeNode 添加数据
         this.treeNode.put(path)
-        handlerMethodMiddlewares[path][method].appendAll(middlewares)
+        handlerMethodMiddlewares[path][method].add(all: middlewares)
     }
 
     public func invokeHandler(routerPath: String, method: String, handler: HandlerFunc, ctx: BaseHttpContext) {

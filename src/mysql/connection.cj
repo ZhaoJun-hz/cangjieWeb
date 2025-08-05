@@ -1,5 +1,5 @@
 package cangjieWeb.mysql
-import std.database.sql.{Connection, ConnectionState, Transaction, Statement}
+import std.database.sql.{Connection, ConnectionState, Transaction, Statement, ColumnInfo}
 import std.collection.{Map,HashMap, ArrayList}
 import std.net.{TcpSocket, IPSocketAddress}
 import cangjieWeb.utils.{ByteArrayUtils}
@@ -164,66 +164,63 @@ public class MysqlConnection <: Connection {
         }
     }
 
-    protected func readColumns(count: UInt16): ArrayList<MySqlField> {
-        let returnResult = ArrayList<MySqlField>()
+    protected func readColumns(count: UInt16): ArrayList<ColumnInfo> {
+        let returnResult = ArrayList<ColumnInfo>()
         for (i in 0..count) {
             let data = readPacket()
             var pos = 0
-            let mySqlField =  MySqlField()
-            // catalog
+            // catalog, 目录名
             var (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data)
             var catalog = String.fromUtf8(stringData)
             pos += n
 
-            // schema database
+            // schema database，数据库名
             (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
             var database = String.fromUtf8(stringData)
             pos += n
 
-            // table
+            // table， 表别名
             (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
             var tableName = String.fromUtf8(stringData)
             pos += n
-            mySqlField.setTableName(tableName)
 
-            // org_table
+            // org_table，表名
             (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
             var orgTableName = String.fromUtf8(stringData)
             pos += n
 
-            // name
+            // name，列别名
             (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
             var name = String.fromUtf8(stringData)
-            mySqlField.setName(name)
             pos += n
 
-            // org_name
+            // org_name， 列名
             (stringData, isNull, n) = ByteArrayUtils.readLengthEncodedString(data[pos..])
             var orgName = String.fromUtf8(stringData)
             pos += n
 
-            //  filter [0x0c]
+            //  filter [0x0c]，保留位
             pos ++
 
             // character_set
-            mySqlField.setCharSet(ByteArrayUtils.littleEndianUint16(data[pos.. pos + 2]))
+            let characterSet = ByteArrayUtils.littleEndianUint16(data[pos.. pos + 2])
             pos += 2
 
             // column_length
-            mySqlField.setLength(ByteArrayUtils.littleEndianUint32(data[pos.. pos + 4]))
+            let columnLength = ByteArrayUtils.littleEndianUint32(data[pos.. pos + 4])
             pos += 4
 
             // type
-            mySqlField.setFieldType(UInt16(data[pos]))
+            let columnType = data[pos]
             pos ++
 
             // flags
-            mySqlField.setFlags(ByteArrayUtils.littleEndianUint16(data[pos..pos + 2]))
+            let flags = ByteArrayUtils.littleEndianUint16(data[pos..pos + 2])
             pos += 2
 
             // decimals
-            mySqlField.setDecimals(data[pos])
-            returnResult.append(mySqlField)
+            let decimals = data[pos]
+            returnResult.add(MySqlField(name, columnType, columnLength, decimals, flags))
         }
 
         // 读EOF
@@ -240,7 +237,7 @@ public class MysqlConnection <: Connection {
                 case 254 =>
                     break;
                 case _ =>
-                    result.append(data)
+                    result.add(data)
             }
         }
         return result

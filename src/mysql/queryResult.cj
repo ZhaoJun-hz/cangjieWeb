@@ -4,11 +4,11 @@ import std.collection.{ArrayList}
 import cangjieWeb.utils.ByteArrayUtils
 public class MysqlQueryResult <: QueryResult {
 
-    private let columns: ArrayList<MySqlField>
+    private let columns: ArrayList<ColumnInfo>
     private let rows: ArrayList<Array<Byte>>
 
     // 当前遍历到第几行，第几条数据
-    private var tempRowsIndex = 0
+    private var tempRowsIndex = -1
     // 遍历当前行的第几个字段
     private var tempRowPos = 0
 
@@ -17,7 +17,7 @@ public class MysqlQueryResult <: QueryResult {
     // null_bitmap 结束的下标 + 1 ,也就是真实数据开始的地方
     private var nullBitMapEndPos = 0
 
-    init(columns: ArrayList<MySqlField>, rows: ArrayList<Array<Byte>>) {
+    init(columns: ArrayList<ColumnInfo>, rows: ArrayList<Array<Byte>>) {
         this.columns = columns
         this.rows = rows
         nullBitMapEndPos= (this.columns.size + 7 + 2) / 8 + 1
@@ -25,22 +25,35 @@ public class MysqlQueryResult <: QueryResult {
 
     public prop columnInfos: Array<ColumnInfo> {
         get() {
-            return ArrayList<ColumnInfo>().toArray()
+            return columns.toArray()
         }
     }
-    
-    public func next(values: Array<SqlDbType>): Bool {
+
+    public func get<T>(index: Int): T {
+        getOrNull<T>(index).getOrThrow()
+    }
+
+    public func getOrNull<T>(index: Int): ?T {
+        if (index <= 0 || index > columns.size) {
+            throw SqlException("index : ${index} out of bounds : ${columns.size}")
+        }
+        let pos = index - 1
+        getData<T>(pos)
+
+    }
+
+    public func next(): Bool {
         tempRowPos = nullBitMapEndPos
-        if( tempRowsIndex < rows.size) {
-            for(i in 0 .. values.size) {
-                fillData(values[i], i)
-            }
+        if (tempRowsIndex < rows.size - 1) {
             tempRowsIndex ++
-            // 还有数据
             return true
         }
-        // 没有数据
         return false
+    }
+
+    @Deprecated
+    public func next(values: Array<SqlDbType>): Bool {
+        throw Exception("Deprecated method")
     }
     public func close(): Unit {
 
@@ -49,28 +62,26 @@ public class MysqlQueryResult <: QueryResult {
         return false
     }
 
-    private func fillData(value: SqlDbType, index: Int64) {
-        match(value) {
-            case v: SqlInteger => 
-                let number = ByteArrayUtils.littleEndianUint32(rows[tempRowsIndex][tempRowPos..])
-                v.value = Int32(number)
-                tempRowPos += 4
-
-            case v: SqlVarchar =>
-                let (s, isNull, n) = ByteArrayUtils.readLengthEncodedString(rows[tempRowsIndex][tempRowPos..])
-                v.value = String.fromUtf8(s)
-                tempRowPos += n
-
-            case v: SqlNullableInteger =>
-                if (judgeOne(index)) {
-                    v.value = Option.None
-                } else {
+    private func getData<T>(index: Int64): Option<T> {
+        let value = columns
+        let columnInfo = columns[index]
+        match(columnInfo.typeName) {
+            case "Int32" => 
+                if (!judgeOne(index)) {
                     let number = ByteArrayUtils.littleEndianUint32(rows[tempRowsIndex][tempRowPos..])
-                    v.value = Int32(number)
                     tempRowPos += 4
+                    return Int32(number) as T
+                } else {
+                    return  Option<T>.None
                 }
-            case _ =>
-                println("unsupport type")
+            case "String" => 
+                let (s, isNull, n) = ByteArrayUtils.readLengthEncodedString(rows[tempRowsIndex][tempRowPos..])
+                let temp = String.fromUtf8(s)
+                tempRowPos += n
+                return temp as T
+
+
+            case _ => throw Exception("unsupport type")
         }
     }
 

@@ -1,7 +1,7 @@
 package cangjieWeb.utils
 import std.collection.{ArrayList}
-import crypto.digest.{SHA256, SHA1}
-import crypto.keys.{RSAPublicKey, PadOption, OAEPOption}
+import stdx.crypto.digest.{SHA256, SHA1}
+import stdx.crypto.keys.{RSAPublicKey, PadOption, OAEPOption}
 import std.io.ByteBuffer
 public class ByteArrayUtils {
     // 判断两个Array<Byte>数组是否相等，相等，返回true，否则，返回false
@@ -34,9 +34,9 @@ public class ByteArrayUtils {
                     // 两个分隔符其实连着的，中间内容为空，也是不需要的
                     if (i != prevIndex) {
                         if(prevIndex == 0) {
-                            result.append(source[0..i])
+                            result.add(source[0..i])
                         } else {
-                            result.append(source[prevIndex ..i])
+                            result.add(source[prevIndex ..i])
                         }
                     }
                 }
@@ -47,7 +47,7 @@ public class ByteArrayUtils {
         if(!dropLast) {
             // 上一个匹配的索引小标 + 分隔符长度 不等于 原Byte数组的长度，说明有内容
             if (prevIndex + separatorSize != sourceSize) {
-                result.append(source[prevIndex..])
+                result.add(source[prevIndex..])
             }
         }
         return result
@@ -136,26 +136,26 @@ public class ByteArrayUtils {
     public static func appendLengthEncodedInteger(n: UInt64): Array<Byte> {
         let result = ArrayList<Byte>()
         if (n <= 250) {
-            result.append(UInt8(n))
+            result.add(UInt8(n))
         } else if (n <= 0xffff) {
-            result.append(0xfc)
-            result.append(UInt8(n & 0xff))
-            result.append(UInt8(n >> 8 & 0xff))
+            result.add(0xfc)
+            result.add(UInt8(n & 0xff))
+            result.add(UInt8(n >> 8 & 0xff))
         } else if (n <= 0xffffff) {
-            result.append(0xfd)
-            result.append(UInt8(n & 0xff))
-            result.append(UInt8(n >> 8 & 0xff))
-            result.append(UInt8(n >> 16 & 0xff))
+            result.add(0xfd)
+            result.add(UInt8(n & 0xff))
+            result.add(UInt8(n >> 8 & 0xff))
+            result.add(UInt8(n >> 16 & 0xff))
         } else {
-            result.append(0xfe)
-            result.append(UInt8(n & 0xff))
-            result.append(UInt8(n >> 8 & 0xff))
-            result.append(UInt8(n >> 16 & 0xff))
-            result.append(UInt8(n >> 24 & 0xff))
-            result.append(UInt8(n >> 32 & 0xff))
-            result.append(UInt8(n >> 40 & 0xff))
-            result.append(UInt8(n >> 48 & 0xff))
-            result.append(UInt8(n >> 56 & 0xff))
+            result.add(0xfe)
+            result.add(UInt8(n & 0xff))
+            result.add(UInt8(n >> 8 & 0xff))
+            result.add(UInt8(n >> 16 & 0xff))
+            result.add(UInt8(n >> 24 & 0xff))
+            result.add(UInt8(n >> 32 & 0xff))
+            result.add(UInt8(n >> 40 & 0xff))
+            result.add(UInt8(n >> 48 & 0xff))
+            result.add(UInt8(n >> 56 & 0xff))
         }
         return result.toArray()
     }
@@ -202,23 +202,23 @@ public class ByteArrayUtils {
 
     public static func uint64ToBytes(n: UInt64): Array<Byte> {
         let result = ArrayList<Byte>()
-        result.append(UInt8(n & 0xff))
-        result.append(UInt8(n >> 8 & 0xff))
-        result.append(UInt8(n >> 16 & 0xff))
-        result.append(UInt8(n >> 24 & 0xff))
-        result.append(UInt8(n >> 32 & 0xff))
-        result.append(UInt8(n >> 40 & 0xff))
-        result.append(UInt8(n >> 48 & 0xff))
-        result.append(UInt8(n >> 56 & 0xff))
+        result.add(UInt8(n & 0xff))
+        result.add(UInt8(n >> 8 & 0xff))
+        result.add(UInt8(n >> 16 & 0xff))
+        result.add(UInt8(n >> 24 & 0xff))
+        result.add(UInt8(n >> 32 & 0xff))
+        result.add(UInt8(n >> 40 & 0xff))
+        result.add(UInt8(n >> 48 & 0xff))
+        result.add(UInt8(n >> 56 & 0xff))
         return result.toArray()
     }
 
     public static func uint32ToBytes(n: UInt32): Array<Byte> {
         let result = ArrayList<Byte>()
-        result.append(UInt8(n & 0xff))
-        result.append(UInt8(n >> 8 & 0xff))
-        result.append(UInt8(n >> 16 & 0xff))
-        result.append(UInt8(n >> 24 & 0xff))
+        result.add(UInt8(n & 0xff))
+        result.add(UInt8(n >> 8 & 0xff))
+        result.add(UInt8(n >> 16 & 0xff))
+        result.add(UInt8(n >> 24 & 0xff))
         return result.toArray()
     }
 

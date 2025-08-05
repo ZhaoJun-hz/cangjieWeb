@@ -1,67 +1,58 @@
 package cangjieWeb.mysql
+import std.database.sql.{ColumnInfo}
+import cangjieWeb.utils.FlagUtils
 
-protected class MySqlField {
-    private var tableName: String = ""
-    private var name: String = ""
-    private var length: UInt32 = 0
-    private var flags: UInt16 = 0
-    private var fieldType: UInt16 = 0
-    private var decimals: Byte = 0
-    private var charSet: UInt16 = 0
+protected class MySqlField <: ColumnInfo {
+    private let _displaySize: Int64
+    private let _length: Int64
+    private let _name: String
+    private let _nullable: Bool
+    private let _scale: Int64
+    private let _typeName: String
 
-    public func getTableName() {
-        return this.tableName
+    protected init(name: String, columnType: UInt8, columnLength: UInt32, decimals: UInt8, flags: UInt16) {
+        let unsigned = FlagUtils.hasFlag(flags, 1 << 5)
+        this._name = name
+        this._length = Int64(columnLength)
+        this._displaySize = Int64(columnLength)
+        this._scale = Int64(decimals)
+        this._typeName = ColumnType.of(columnType).cjType(unsigned)
+        this._nullable = FlagUtils.hasFlag(flags, 1)
     }
 
-    public func setTableName(tableName: String) {
-        this.tableName = tableName
+    public override prop name: String {
+        get() {
+            return _name
+        }
     }
 
-    public func getName() {
-        return this.name
+    public override prop typeName: String {
+        get() {
+            return _typeName
+        }
     }
 
-    public func setName(name: String) {
-        this.name = name
+    public override prop displaySize: Int64 {
+        get() {
+            return _displaySize
+        }
     }
 
-    public func getLength() {
-        return this.length
+    public override prop length: Int64 {
+        get() {
+            return _length
+        }
     }
 
-    public func setLength(length: UInt32) {
-        this.length = length
+    public override prop scale: Int64 {
+        get() {
+            return _scale
+        }
     }
 
-    public func getFlags() {
-        return this.flags
-    }
-
-    public func setFlags(flags: UInt16) {
-        this.flags = flags
-    }
-
-    public func getFieldType() {
-        return this.fieldType
-    }
-
-    public func setFieldType(fieldType: UInt16) {
-        this.fieldType = fieldType
-    }
-
-    public func getDecimals() {
-        return this.decimals
-    }
-
-    public func setDecimals(decimals: Byte) {
-        this.decimals = decimals
-    }
-
-    public func getCharSet() {
-        return this.charSet
-    }
-
-    public func setCharSet(charSet: UInt16) {
-        this.charSet = charSet
+    public override prop nullable: Bool {
+        get() {
+            return _nullable
+        }
     }
 }

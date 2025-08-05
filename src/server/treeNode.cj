@@ -30,7 +30,7 @@ class TreeNode {
             // 没有匹配，需要创建一个TreeNode
             if (!isMatch) {
                 let newTreeNode = TreeNode(tempPath, root.fullPath + "/" + tempPath)
-                root.child.append(newTreeNode)
+                root.child.add(newTreeNode)
                 root.isEnd = false
                 root = newTreeNode
             }
